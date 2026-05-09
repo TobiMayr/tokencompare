@@ -74,7 +74,46 @@ function refreshWindowSize() {
   stepCount = MAX_WINDOW_START;
   state.windowStart = Math.min(state.windowStart, MAX_WINDOW_START);
   state.activeBarIds = windowIds(state.windowStart);
+  lastAutoTarget = null;
   return true;
+}
+
+// Pick the windowStart that places the user bar as second-largest visible.
+// Returns null when there's no user count to position around.
+function desiredWindowStartForCount(count) {
+  if (count == null || count <= 0) return null;
+  const i = REFERENCES.findIndex(r => r.tokens > count);
+  if (i === -1) return MAX_WINDOW_START;     // user larger than all refs
+  if (i === 0) return 0;                      // user smaller than all refs
+  // Place the smallest-bigger ref at the top of the window so user lands second.
+  return Math.max(0, Math.min(MAX_WINDOW_START, i - WINDOW_SIZE + 1));
+}
+
+let lastAutoTarget = null;
+
+function scrollToWindowStart(target) {
+  target = Math.max(0, Math.min(MAX_WINDOW_START, target));
+  let scrollY;
+  if (target <= 0) {
+    scrollY = 0;
+  } else {
+    const stepEl = scrollSteps[target - 1];
+    if (!stepEl) return;
+    const stepTopDoc = stepEl.getBoundingClientRect().top + window.scrollY;
+    scrollY = stepTopDoc - window.innerHeight * 0.5 + 2;
+  }
+  window.scrollTo({ top: scrollY, behavior: 'smooth' });
+}
+
+function autoScrollToUserBar() {
+  const target = desiredWindowStartForCount(state.userTokenCount);
+  if (target == null) {
+    lastAutoTarget = null;
+    return;
+  }
+  if (target === lastAutoTarget) return;
+  lastAutoTarget = target;
+  scrollToWindowStart(target);
 }
 
 const state = {
@@ -474,6 +513,7 @@ const onPasteInput = debounce(() => {
   state.wordCount = countWords(text);
   state.userTokenCount = state.tokeniserReady ? tokenise(text) : null;
   render();
+  autoScrollToUserBar();
 }, 150);
 
 const onCountInput = debounce(() => {
@@ -485,6 +525,7 @@ const onCountInput = debounce(() => {
   state.charCount = 0;
   state.wordCount = 0;
   render();
+  autoScrollToUserBar();
 }, 100);
 
 function setMode(mode) {
