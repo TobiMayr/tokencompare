@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HowManyTokens — make sense of token counts</title>
+  <meta name="description" content="Compare token counts to familiar texts. Paste any text or enter a number, and see what it adds up to in Bibles, Wikipedias, and Harry Potter books." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>HowManyTokens</h1>
+    <p class="tagline">Make sense of token counts.</p>
+  </header>
+
+  <div class="scroll-stage">
+    <main class="main-view" aria-label="Token comparison tool">
+      <section class="inputs">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" role="tab" aria-selected="true" data-mode="paste">Paste text</button>
+          <button class="tab" role="tab" aria-selected="false" data-mode="count">Enter count</button>
+        </div>
+
+        <div class="tab-panel" data-panel="paste">
+          <textarea
+            id="paste-input"
+            placeholder="Paste any text here…"
+            aria-label="Text to tokenise"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+        </div>
+
+        <div class="tab-panel is-hidden" data-panel="count">
+          <input
+            id="count-input"
+            type="text"
+            inputmode="numeric"
+            placeholder="e.g. 5000"
+            aria-label="Token count"
+            autocomplete="off"
+          />
+          <p class="count-hint">Enter a token count directly — useful for things like API spend.</p>
+        </div>
+
+        <p class="stats" id="stats" aria-live="polite">
+          <span class="stats-loading">Loading tokeniser…</span>
+        </p>
+      </section>
+
+      <section class="output">
+        <div class="comparison" id="comparison" aria-live="polite">
+          <div class="comparison-empty" id="comparison-empty">Paste some text or enter a token count to see comparisons.</div>
+          <div class="comparison-content" id="comparison-content" hidden>
+            That's about
+            <span class="comparison-num" id="comparison-num-primary">—</span>
+            <button class="ref-chip" id="ref-chip-primary" type="button" data-target="primary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-primary">—</span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button><span class="comparison-secondary" id="comparison-secondary"> — or
+            <span class="comparison-num" id="comparison-num-secondary">—</span>
+            <button class="ref-chip" id="ref-chip-secondary" type="button" data-target="secondary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-secondary">—</span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button></span>.
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-section" aria-label="Reference texts comparison">
+        <ol class="bars" id="bars"></ol>
+        <p class="disclaimer">
+          Token counts use the <code>o200k_base</code> tokeniser (GPT-4o / GPT-5).
+          Claude and Gemini use different tokenisers — counts may differ by ±5–10%.
+          Reference text counts are approximate. No data leaves your browser.
+        </p>
+      </section>
+    </main>
+
+    <div class="scroll-driver" id="scroll-driver" aria-hidden="true"></div>
+  </div>
+
+  <footer class="site-footer">
+    <p>Made by Tobi Mayr · 100% client-side, nothing sent anywhere.</p>
+  </footer>
+
+  <div class="ref-popover" id="ref-popover" role="listbox" aria-hidden="true" aria-label="Choose a reference text">
+    <ul class="ref-list" id="ref-list"></ul>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
