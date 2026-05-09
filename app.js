@@ -1,4 +1,4 @@
-// HowManyTokens — main app logic
+// Token Compare — main app logic
 // All comparisons happen client-side; no data leaves the browser.
 
 const REFERENCES = [
@@ -43,6 +43,9 @@ function windowIds(start) {
 // Bar row max-height (50px) + padding-top (7px) — kept in sync with CSS .bar-row.
 const BAR_ROW_HEIGHT = 50;
 const MIN_WINDOW_SIZE = 5;
+// Cap so there are always enough scroll steps to make the chart feel scrollable
+// even on very tall viewports.
+const MAX_WINDOW_SIZE = Math.min(18, REFERENCES.length - 6);
 
 function computeWindowSize() {
   const barsEl = dom.bars;
@@ -60,7 +63,7 @@ function computeWindowSize() {
   const available = bottomLimit - chartGap - disclaimerH - barsTop;
 
   const fits = Math.floor(available / BAR_ROW_HEIGHT);
-  return Math.max(MIN_WINDOW_SIZE, Math.min(REFERENCES.length, fits));
+  return Math.max(MIN_WINDOW_SIZE, Math.min(MAX_WINDOW_SIZE, fits));
 }
 
 function refreshWindowSize() {
@@ -494,6 +497,9 @@ function setMode(mode) {
   for (const panel of dom.panels) {
     panel.classList.toggle('is-hidden', panel.dataset.panel !== mode);
   }
+  // Input panels have different heights — re-fit the bar window.
+  if (refreshWindowSize()) buildDriver();
+  updateActiveBars();
   // Recompute count for the now-active input
   if (mode === 'paste') {
     onPasteInput();
