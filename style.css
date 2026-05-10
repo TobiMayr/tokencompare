@@ -575,6 +575,25 @@ code {
   font-weight: 600;
 }
 
+.user-editable {
+  cursor: text;
+  padding: 0 3px;
+  margin: 0 -3px;
+  border-radius: 4px;
+  outline: none;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.user-editable:hover {
+  background: rgba(238, 108, 77, 0.12);
+}
+
+.user-editable:focus {
+  background: rgba(238, 108, 77, 0.18);
+  box-shadow: 0 0 0 2px rgba(238, 108, 77, 0.35);
+  overflow: visible;
+}
+
 .bar-row.is-user .bar-track {
   background: var(--user-soft);
 }

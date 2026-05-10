@@ -138,6 +138,7 @@ const state = {
   userPickedSecondary: false,
   dropdownOpen: false,
   dropdownTarget: null,           // 'primary' | 'secondary'
+  userBarLabel: 'Your input',
 };
 
 let encoder = null;
@@ -561,14 +562,44 @@ function buildBars() {
   userLi.dataset.barId = 'user';
   userLi.innerHTML = `
     <div class="bar-label">
-      <span class="bar-label-text" title="Your input">Your input</span>
+      <span class="bar-label-text user-editable" contenteditable="plaintext-only" spellcheck="false" title="Click to rename"></span>
     </div>
     <div class="bar-track">
       <div class="bar-fill"></div>
       <span class="bar-count" data-user-count></span>
     </div>
   `;
+  const userLabel = userLi.querySelector('.bar-label-text');
+  userLabel.textContent = state.userBarLabel;
+  wireUserLabelEditing(userLabel);
   dom.bars.appendChild(userLi);
+}
+
+function wireUserLabelEditing(labelEl) {
+  labelEl.addEventListener('focus', () => {
+    // Select all on focus so the user can immediately overtype.
+    const range = document.createRange();
+    range.selectNodeContents(labelEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+  labelEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      labelEl.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      labelEl.textContent = state.userBarLabel;
+      labelEl.blur();
+    }
+  });
+  labelEl.addEventListener('blur', () => {
+    const next = labelEl.textContent.replace(/\s+/g, ' ').trim() || 'Your input';
+    state.userBarLabel = next;
+    labelEl.textContent = next;
+    labelEl.setAttribute('title', next === 'Your input' ? 'Click to rename' : next);
+  });
 }
 
 function positionCount(row, item, max) {
