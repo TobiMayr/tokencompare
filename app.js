@@ -2,33 +2,33 @@
 // All comparisons happen client-side; no data leaves the browser.
 
 const REFERENCES = [
-  { id: 'tweet',       label: 'A tweet (280 chars)',                      tokens: 70,            rough: true, note: 'Assumes 280 chars of typical mixed content. Plain English prose tokenises to ~57 tokens (avg of 5 samples, o200k_base); URLs, hashtags, @mentions and emoji push real tweets toward 80+. 70 is a middle-ground estimate.' },
-  { id: 'email',       label: 'A typical email',                          tokens: 155,           rough: true, note: 'Assumes a ~135-word business email. Tokenised 3 representative samples (124–144 words) averaging 155 tokens with o200k_base.' },
-  { id: 'a4',          label: 'One A4 page',                              tokens: 520,           rough: true, note: 'Assumes ~400 words of body text at 11pt, single-spaced. A 400-word slice of Pride and Prejudice tokenises to 520 tokens with o200k_base.' },
-  { id: 'udhr',        label: 'Universal Declaration of Human Rights',    tokens: 1980,                       note: 'Exact count of the full English text (unicode-org/udhr): 1,747 words → 1,977 tokens with o200k_base, rounded to 1,980.' },
-  { id: 'news',        label: 'A news article',                           tokens: 2300,          rough: true, note: 'Assumes a ~1,800-word longform piece. News-style prose tokenises at ~1.27 tok/word (measured on the Wikipedia Apollo 11 article, o200k_base); briefs and features differ by an order of magnitude.' },
-  { id: 'magna-carta', label: 'Magna Carta',                              tokens: 5700,                       note: 'Exact count of the G.R.C. Davis English translation (Fordham Internet History Sourcebooks): 4,585 words → 5,690 tokens with o200k_base. Other translations differ in length.' },
-  { id: 'paper',       label: 'A research paper',                         tokens: 12000,         rough: true, note: 'Assumes a ~9,000-word peer-reviewed paper. Reference: "Attention Is All You Need" (arxiv 1706.03762) tokenises to 10,140 tokens at 6,141 words; scaling gives ~13K for a 9K-word paper. Venue and field vary widely.' },
-  { id: 'manifesto',   label: 'The Communist Manifesto',                  tokens: 15700,                      note: 'Exact count of the 1888 English edition (Project Gutenberg #61): 11,467 words → 15,659 tokens with o200k_base.' },
-  { id: 'little-prince', label: 'The Little Prince',                      tokens: 21500,                      note: 'Word-count estimate (no exact text — still in copyright in many jurisdictions). 16,534 words (Reading Length) × literary-prose ratio ~1.3 ≈ 21,500 tokens. Will refine if a public-domain text becomes available.' },
-  { id: 'animal-farm', label: 'Animal Farm',                              tokens: 40000,                      note: 'Word-count estimate (no exact text — still in copyright in most jurisdictions). 29,966 words (consistent across sources) × literary-prose ratio 1.337 (Pride & Prejudice baseline, o200k_base) ≈ 40,060 tokens.' },
-  { id: 'grundgesetz', label: 'German Grundgesetz',                       tokens: 42500,                      note: 'Exact count of the official consolidated text from gesetze-im-internet.de (BJNR000010949, decoded as ISO-8859-1): 24,950 words → 42,483 tokens with o200k_base. German has a higher tokens/word ratio (~1.77) than English due to compound words and umlauts.' },
-  { id: 'gatsby',      label: 'The Great Gatsby',                         tokens: 65000,                      note: 'Exact count of Project Gutenberg #64317 (US public-domain edition, 2021): 48,208 words → 64,919 tokens with o200k_base. Previous estimate of 105K was too high — Gatsby is genuinely short (~50K words).' },
-  { id: '1984',        label: '1984',                                     tokens: 119000,                     note: 'Word-count estimate (still in copyright in most jurisdictions). 88,942 words (Reading Length) × literary-prose ratio 1.337 (Pride & Prejudice baseline, o200k_base) ≈ 118,940 tokens.' },
-  { id: 'pride',       label: 'Pride and Prejudice',                      tokens: 170000,                     note: 'Exact count of Project Gutenberg #1342: 127,359 words → 170,258 tokens with o200k_base. Used as the baseline for the 1.337 literary-prose tokens/word ratio applied elsewhere.' },
-  { id: 'moby-dick',   label: 'Moby-Dick',                                tokens: 305000,                     note: 'Exact count of Project Gutenberg #2701: 212,796 words → 305,431 tokens with o200k_base (1.435 tpw — high because of nautical jargon, Latin, archaic English).' },
-  { id: 'lotr',        label: 'The Lord of the Rings (trilogy)',          tokens: 743000,                     note: 'Word-count estimate (still in copyright). Fellowship 177,227 + Two Towers 143,436 + Return of the King 134,462 = 550,147 words (Reading Length via Originality.ai). × 1.35 tpw (slight bump above the 1.337 literary baseline for invented proper nouns: Galadriel, Cirith Ungol, etc.) ≈ 742,700 tokens.' },
-  { id: 'war-peace',   label: 'War and Peace',                            tokens: 766000,                     note: 'Exact count of the Maude translation (Project Gutenberg #2600): 563,286 words → 765,705 tokens with o200k_base.' },
-  { id: 'bible',       label: 'The Bible (KJV)',                          tokens: 1144000,                    note: 'Exact count of the King James Version (Project Gutenberg #10): 821,496 words → 1,144,343 tokens with o200k_base (1.393 tpw — high because of Hebrew proper names like Mahershalalhashbaz that split into many tokens).' },
-  { id: 'shakespeare', label: 'Complete Shakespeare',                     tokens: 1436000,                    note: 'Exact count of the Complete Works (Project Gutenberg #100): 963,460 words → 1,436,260 tokens with o200k_base (1.491 tpw — high because of iambic pentameter, archaic words, character-name tags like ROMEO splitting into multiple tokens).' },
-  { id: 'hp',          label: 'Harry Potter (7-book series)',             tokens: 1460000,                    note: 'Word-count estimate (still in copyright). Total 1,084,170 words across all 7 books (76,944 + 85,141 + 107,253 + 190,637 + 257,045 + 168,923 + 198,227 — harrypotterinsider.com / multiple sources). × 1.35 tpw (slight bump above 1.337 literary baseline for invented proper nouns: Hogwarts, Hermione, Quidditch) ≈ 1,463,630 tokens.' },
-  { id: 'got',         label: 'Game of Thrones (5-book series)',          tokens: 2480000,                    note: 'Word-count estimate (still in copyright). Total ~1,770,000 words across the 5 published A Song of Ice and Fire books (298K + 326K + 424K + 300K + 422K — wordsrated.com). × 1.40 tpw (higher bump for heavy fantasy proper nouns: Targaryen, Daenerys, Westeros, plus archaic phrasing) ≈ 2,478,000 tokens.' },
-  { id: 'britannica',  label: 'Encyclopædia Britannica',                  tokens: 58000000,                   note: 'Word-count estimate. ~44 million words (15th edition, 32 volumes — well-documented across multiple sources including Wikipedia). × 1.32 tpw (encyclopedic prose with many proper nouns, slightly above 1.27 news ratio) ≈ 58,080,000 tokens.' },
-  { id: 'gutenberg',   label: 'All Project Gutenberg books',              tokens: 5000000000,                 note: 'Word-count estimate. Standardized PG corpus (Gerlach & Font-Clos 2020, arxiv 1812.08092): 55,905 books, 3 billion word-tokens (2.8B English). Scaled to current ~75K books → ~4B words. × ~1.35 tpw (mixed languages, classical English) ≈ 5B BPE tokens.' },
-  { id: 'wikipedia',   label: 'English Wikipedia (May 2026)',             tokens: 6400000000,                 note: 'Word-count estimate. Wikipedia stats (Wikipedia:Size_of_Wikipedia, May 2026): 7.18M articles containing over 5 billion words. × 1.27 tpw (news/encyclopedic prose ratio measured on the Apollo 11 article, o200k_base) ≈ 6.4 billion tokens.' },
-  { id: 'github',      label: 'All public code on GitHub',                tokens: 1000000000000,              note: 'Anchored to a published figure rather than truly "all" GitHub. The Stack v1 (BigCode 2022): 6.4TB → 200B training tokens. The Stack v2 (2024): 67.5TB → 900B training tokens. Both are deduplicated and license-filtered. Truly "all public code on GitHub" (incl. non-permissive, forks, old versions) is probably 5–10× larger. Keeping at 1T as a defensible Stack-v2 anchor; bump to 5T+ if you want raw-corpus interpretation.' },
-  { id: 'papers',      label: 'All academic papers ever published',       tokens: 2000000000000,              note: 'Estimate. OpenAlex (Nov 2025) indexes 271.3M scholarly works (core), 463M with the xpac expansion. Average paper ~5,000 words × 1.5 tpw (technical prose with citations, equations, proper nouns) ≈ 2T tokens for the core OpenAlex set. Could be 3–4T if using the full xpac figure or longer avg paper length. Wide uncertainty.' },
-  { id: 'llama3',      label: 'Llama 3 training corpus',                  tokens: 15000000000000,             note: 'Official Meta figure. Llama 3 (and 3.1) was pretrained on "over 15 trillion tokens" of publicly available data (ai.meta.com/blog/meta-llama-3-1, model card). Exact figure unpublished — 15T is the floor.' },
+  { id: 'tweet',       label: 'A tweet (280 chars)',                      tokens: 70,            rough: true, note: 'Assumes 280 chars of typical mixed content. Plain English prose tokenises to ~57 tokens; URLs, hashtags, @mentions and emoji push real tweets toward 80+. 70 is a middle-ground estimate.' },
+  { id: 'email',       label: 'A typical email',                          tokens: 155,           rough: true, note: 'Assumes a ~135-word business email. Tokenised 3 representative samples (124–144 words) averaging 155 tokens.' },
+  { id: 'a4',          label: 'One A4 page',                              tokens: 520,           rough: true, note: 'Assumes ~400 words of body text at 11pt, single-spaced. A 400-word slice of Pride and Prejudice tokenises to ~520 tokens.' },
+  { id: 'udhr',        label: 'Universal Declaration of Human Rights',    tokens: 1980,                       note: 'Exact count of the full English text: 1,747 words → 1,977 tokens, rounded to 1,980. <a href="https://www.un.org/en/about-us/universal-declaration-of-human-rights">UN.org</a>' },
+  { id: 'news',        label: 'A news article',                           tokens: 2300,          rough: true, note: 'Assumes a ~1,800-word longform piece × ~1.3 ≈ 2,300 tokens. Briefs and features differ by an order of magnitude.' },
+  { id: 'magna-carta', label: 'Magna Carta',                              tokens: 5700,                       note: 'Exact count of the G.R.C. Davis English translation: 4,585 words → 5,690 tokens. Other translations differ in length. <a href="https://sourcebooks.fordham.edu/source/magnacarta.asp">Fordham Sourcebooks</a>' },
+  { id: 'paper',       label: 'A research paper',                         tokens: 12000,         rough: true, note: 'Assumes a ~9,000-word peer-reviewed paper. Reference: <a href="https://arxiv.org/abs/1706.03762">"Attention Is All You Need"</a> tokenises to 10,140 tokens at 6,141 words; scaling gives ~13K for a 9K-word paper. Venue and field vary widely.' },
+  { id: 'manifesto',   label: 'The Communist Manifesto',                  tokens: 15700,                      note: 'Exact count of the 1888 English edition: 11,467 words → 15,659 tokens. <a href="https://www.gutenberg.org/ebooks/61">Project Gutenberg #61</a>' },
+  { id: 'little-prince', label: 'The Little Prince',                      tokens: 21500,                      note: 'Estimate (still in copyright in many jurisdictions). 16,534 words × ~1.3 ≈ 21,500 tokens. <a href="https://en.wikipedia.org/wiki/The_Little_Prince">Wikipedia</a>' },
+  { id: 'animal-farm', label: 'Animal Farm',                              tokens: 40000,                      note: 'Estimate (still in copyright in most jurisdictions). 29,966 words × ~1.3 ≈ 40,000 tokens. <a href="https://en.wikipedia.org/wiki/Animal_Farm">Wikipedia</a>' },
+  { id: 'grundgesetz', label: 'German Grundgesetz',                       tokens: 42500,                      note: 'Exact count of the official consolidated text: 24,950 words → 42,483 tokens. German has a higher tokens/word ratio (~1.77) than English due to compound words and umlauts. <a href="https://www.gesetze-im-internet.de/gg/">gesetze-im-internet.de</a>' },
+  { id: 'gatsby',      label: 'The Great Gatsby',                         tokens: 65000,                      note: 'Exact count of the 2021 US public-domain edition: 48,208 words → 64,919 tokens. Gatsby is genuinely short (~50K words). <a href="https://www.gutenberg.org/ebooks/64317">Project Gutenberg #64317</a>' },
+  { id: '1984',        label: '1984',                                     tokens: 119000,                     note: 'Estimate (still in copyright in most jurisdictions). 88,942 words × ~1.3 ≈ 119,000 tokens. <a href="https://en.wikipedia.org/wiki/Nineteen_Eighty-Four">Wikipedia</a>' },
+  { id: 'pride',       label: 'Pride and Prejudice',                      tokens: 170000,                     note: 'Exact count: 127,359 words → 170,258 tokens. <a href="https://www.gutenberg.org/ebooks/1342">Project Gutenberg #1342</a>' },
+  { id: 'moby-dick',   label: 'Moby-Dick',                                tokens: 305000,                     note: 'Exact count: 212,796 words → 305,431 tokens. Nautical jargon, Latin and archaic English push the ratio above typical literary prose. <a href="https://www.gutenberg.org/ebooks/2701">Project Gutenberg #2701</a>' },
+  { id: 'lotr',        label: 'The Lord of the Rings (trilogy)',          tokens: 664000,                     note: 'Estimate (still in copyright). Trilogy main text: 481,103 words — Fellowship 187,790 + Two Towers 156,198 + Return of the King 137,115 (these sum correctly, unlike the ~550K figure online which slips in The Hobbit or appendices). × ~1.4 ≈ 664,000 tokens; invented Elvish names push the ratio up. <a href="https://en.wikipedia.org/wiki/The_Lord_of_the_Rings">Wikipedia</a>' },
+  { id: 'war-peace',   label: 'War and Peace',                            tokens: 766000,                     note: 'Exact count of the Maude translation: 563,286 words → 765,705 tokens. <a href="https://www.gutenberg.org/ebooks/2600">Project Gutenberg #2600</a>' },
+  { id: 'bible',       label: 'The Bible (KJV)',                          tokens: 1104000,                    note: 'Estimate. KJV main verse text: 783,137 words (OT 602,587 + NT 180,550). Bibles look compact in print because of thin paper and small dense fonts — by word count the KJV is ~1.6× the LOTR trilogy. × ~1.4 ≈ 1,104,000 tokens; Hebrew proper names like Mahershalalhashbaz split into many tokens. <a href="https://lightandgospel.com/how-many-words-are-in-the-kjv-bible/">Source</a>' },
+  { id: 'shakespeare', label: 'Complete Shakespeare',                     tokens: 1436000,                    note: 'Exact count of the Complete Works: 963,460 words → 1,436,260 tokens. Iambic pentameter, archaic words and character-name tags like ROMEO push the ratio up. <a href="https://www.gutenberg.org/ebooks/100">Project Gutenberg #100</a>' },
+  { id: 'hp',          label: 'Harry Potter (7-book series)',             tokens: 1460000,                    note: 'Estimate (still in copyright). 1,084,170 words across all 7 books (76,944 + 85,141 + 107,253 + 190,637 + 257,045 + 168,923 + 198,227). × ~1.35 ≈ 1,460,000 tokens; invented proper nouns (Hogwarts, Hermione, Quidditch) push the ratio up slightly. <a href="https://en.wikipedia.org/wiki/Harry_Potter">Wikipedia</a>' },
+  { id: 'got',         label: 'Game of Thrones (5-book series)',          tokens: 2480000,                    note: 'Estimate (still in copyright). ~1,770,000 words across the 5 published A Song of Ice and Fire books (298K + 326K + 424K + 300K + 422K). × ~1.4 ≈ 2,478,000 tokens; heavy fantasy proper nouns (Targaryen, Daenerys, Westeros) plus archaic phrasing push the ratio up. <a href="https://wordsrated.com/number-of-words-in-game-of-thrones-books/">wordsrated</a>' },
+  { id: 'britannica',  label: 'Encyclopædia Britannica',                  tokens: 58000000,                   note: 'Estimate. ~44 million words (15th edition, 32 volumes). × ~1.3 ≈ 58 million tokens. <a href="https://en.wikipedia.org/wiki/Encyclop%C3%A6dia_Britannica">Wikipedia</a>' },
+  { id: 'gutenberg',   label: 'All Project Gutenberg books',              tokens: 5000000000,                 note: 'Estimate. Standardized PG corpus (Gerlach & Font-Clos 2020): 55,905 books, ~3 billion words (2.8B English). Scaled to current ~75K books → ~4B words → ~5B tokens. Mix of languages and classical English. <a href="https://arxiv.org/abs/1812.08092">arxiv 1812.08092</a>' },
+  { id: 'wikipedia',   label: 'English Wikipedia (Sept 2025)',             tokens: 6400000000,                 note: 'Estimate (English Wikipedia, September 2025). 7.18M articles containing over 5 billion words → ~6.4 billion tokens. <a href="https://en.wikipedia.org/wiki/Wikipedia:Size_of_Wikipedia">Wikipedia:Size_of_Wikipedia</a>' },
+  { id: 'github',      label: 'All public code on GitHub',                tokens: 1000000000000,              note: 'Anchored to published figures rather than truly "all" GitHub. The Stack v1 (2022): 6.4TB → 200B training tokens. The Stack v2 (2024): 67.5TB → 900B tokens — both deduplicated and license-filtered. Raw "all public code" (incl. non-permissive, forks, old versions) is probably 5–10× larger. 1T is a defensible Stack-v2 anchor. <a href="https://huggingface.co/datasets/bigcode/the-stack-v2">The Stack v2</a>' },
+  { id: 'papers',      label: 'All academic papers ever published',       tokens: 2000000000000,              note: 'Estimate. OpenAlex (Nov 2025) indexes 271.3M scholarly works (core), 463M with the xpac expansion. Average ~5,000 words/paper × ~1.5 (technical prose with citations, equations) ≈ 2T tokens for the core set. Could be 3–4T using the full xpac figure or longer papers. <a href="https://openalex.org/">OpenAlex</a>' },
+  { id: 'llama3',      label: 'Llama 3 training corpus',                  tokens: 15000000000000,             note: 'Official Meta figure. Llama 3 (and 3.1) was pretrained on "over 15 trillion tokens" of publicly available data. Exact figure unpublished — 15T is the floor. <a href="https://ai.meta.com/blog/meta-llama-3-1/">Meta announcement</a>' },
 ];
 
 // Window size is computed dynamically from viewport height — see computeWindowSize().
@@ -153,9 +153,24 @@ const dom = {
   refList: document.getElementById('ref-list'),
   bars: document.getElementById('bars'),
   driver: document.getElementById('scroll-driver'),
+  infoTooltip: document.getElementById('info-tooltip'),
   tabs: document.querySelectorAll('.tab'),
   panels: document.querySelectorAll('.tab-panel'),
 };
+
+function escapeAttr(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+const _stripDiv = document.createElement('div');
+function stripHtml(s) {
+  _stripDiv.innerHTML = String(s);
+  return _stripDiv.textContent || '';
+}
 
 // ----- Tokeniser -----
 
@@ -320,6 +335,118 @@ function toggleDropdown(open, target) {
   }
 }
 
+// ----- Info tooltip -----
+
+let pinnedInfoId = null;
+let activeInfoBtn = null;
+let infoHideTimer = null;
+
+function clearInfoHideTimer() {
+  if (infoHideTimer) {
+    clearTimeout(infoHideTimer);
+    infoHideTimer = null;
+  }
+}
+
+function scheduleInfoHide() {
+  clearInfoHideTimer();
+  infoHideTimer = setTimeout(() => hideInfoTooltip(), 150);
+}
+
+function positionInfoTooltip(anchor) {
+  const r = anchor.getBoundingClientRect();
+  const margin = 8;
+  const w = dom.infoTooltip.offsetWidth;
+  const h = dom.infoTooltip.offsetHeight;
+  // Prefer placing to the right of the icon, vertically centered.
+  let left = r.right + 8;
+  let top = r.top + r.height / 2 - h / 2;
+  if (left + w > window.innerWidth - margin) {
+    // Not enough room on the right — drop below the icon instead.
+    left = r.left;
+    top = r.bottom + 6;
+  }
+  left = Math.max(margin, Math.min(window.innerWidth - w - margin, left));
+  top = Math.max(margin, Math.min(window.innerHeight - h - margin, top));
+  dom.infoTooltip.style.left = left + 'px';
+  dom.infoTooltip.style.top = top + 'px';
+}
+
+function showInfoTooltip(btn) {
+  const refId = btn.dataset.noteId;
+  const ref = REFERENCES.find(r => r.id === refId);
+  if (!ref || !ref.note) return;
+  clearInfoHideTimer();
+  if (activeInfoBtn && activeInfoBtn !== btn) {
+    activeInfoBtn.setAttribute('aria-expanded', 'false');
+  }
+  dom.infoTooltip.innerHTML = ref.note;
+  dom.infoTooltip.querySelectorAll('a').forEach(a => {
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  });
+  dom.infoTooltip.classList.add('is-open');
+  dom.infoTooltip.setAttribute('aria-hidden', 'false');
+  btn.setAttribute('aria-expanded', 'true');
+  activeInfoBtn = btn;
+  // Position after layout so width/height are known.
+  requestAnimationFrame(() => positionInfoTooltip(btn));
+}
+
+function hideInfoTooltip() {
+  clearInfoHideTimer();
+  if (!activeInfoBtn && !pinnedInfoId) return;
+  dom.infoTooltip.classList.remove('is-open');
+  dom.infoTooltip.setAttribute('aria-hidden', 'true');
+  if (activeInfoBtn) activeInfoBtn.setAttribute('aria-expanded', 'false');
+  activeInfoBtn = null;
+  pinnedInfoId = null;
+}
+
+function onBarsOver(e) {
+  const btn = e.target.closest('.bar-info');
+  if (!btn) return;
+  if (pinnedInfoId) return; // pinned takes precedence over hover
+  showInfoTooltip(btn);
+}
+
+function onBarsOut(e) {
+  const btn = e.target.closest('.bar-info');
+  if (!btn) return;
+  if (pinnedInfoId) return;
+  // Don't hide if focus is still on the button (keyboard user).
+  if (document.activeElement === btn) return;
+  // Delay so the cursor can move into the tooltip to click a link.
+  scheduleInfoHide();
+}
+
+function onBarsClick(e) {
+  const btn = e.target.closest('.bar-info');
+  if (!btn) return;
+  e.stopPropagation();
+  const id = btn.dataset.noteId;
+  if (pinnedInfoId === id) {
+    hideInfoTooltip();
+  } else {
+    pinnedInfoId = id;
+    showInfoTooltip(btn);
+  }
+}
+
+function onBarsFocusIn(e) {
+  const btn = e.target.closest('.bar-info');
+  if (!btn) return;
+  if (pinnedInfoId) return;
+  showInfoTooltip(btn);
+}
+
+function onBarsFocusOut(e) {
+  const btn = e.target.closest('.bar-info');
+  if (!btn) return;
+  if (pinnedInfoId) return;
+  hideInfoTooltip();
+}
+
 // ----- Rendering -----
 
 function renderStats() {
@@ -389,12 +516,13 @@ function renderComparison() {
   }
 }
 
-function colorFor(index, total) {
-  const t = total > 1 ? index / (total - 1) : 0;
-  const hue = 200 + t * 40;         // 200° (sky blue) → 240° (deep indigo)
-  const sat = 60;
-  const light = 56 - t * 28;        // 56% (medium sky) → 28% (deep indigo)
-  return `hsl(${hue}, ${sat}%, ${light}%)`;
+const BAR_COLORS = [
+  { fill: '#98c1d9', tone: 'light' },  // powder blue
+  { fill: '#3d5a80', tone: 'dark' },   // dusk blue
+];
+
+function colorFor(index) {
+  return BAR_COLORS[index % BAR_COLORS.length];
 }
 
 function buildBars() {
@@ -404,9 +532,17 @@ function buildBars() {
     const li = document.createElement('li');
     li.className = 'bar-row is-inactive';
     li.dataset.barId = ref.id;
-    li.style.setProperty('--bar-color', colorFor(idx, REFERENCES.length));
+    const { fill, tone } = colorFor(idx);
+    li.style.setProperty('--bar-color', fill);
+    li.dataset.barTone = tone;
+    const infoBtn = ref.note
+      ? `<button class="bar-info" type="button" data-note-id="${ref.id}" aria-label="${escapeAttr(stripHtml(ref.note))}" aria-expanded="false">i</button>`
+      : '';
     li.innerHTML = `
-      <div class="bar-label" title="${ref.label}">${ref.label}</div>
+      <div class="bar-label">
+        <span class="bar-label-text" title="${escapeAttr(ref.label)}">${ref.label}</span>
+        ${infoBtn}
+      </div>
       <div class="bar-track">
         <div class="bar-fill"></div>
         <span class="bar-count">${formatNumber(ref.tokens)}</span>
@@ -418,7 +554,9 @@ function buildBars() {
   userLi.className = 'bar-row is-user is-inactive';
   userLi.dataset.barId = 'user';
   userLi.innerHTML = `
-    <div class="bar-label" title="Your input">Your input</div>
+    <div class="bar-label">
+      <span class="bar-label-text" title="Your input">Your input</span>
+    </div>
     <div class="bar-track">
       <div class="bar-fill"></div>
       <span class="bar-count" data-user-count></span>
@@ -617,14 +755,25 @@ async function init() {
   wireChip(dom.refChipSecondary, 'secondary');
 
   document.addEventListener('click', (e) => {
-    if (!state.dropdownOpen) return;
-    if (dom.refPopover.contains(e.target)) return;
-    if (dom.refChipPrimary.contains(e.target)) return;
-    if (dom.refChipSecondary.contains(e.target)) return;
-    toggleDropdown(false);
+    if (state.dropdownOpen
+        && !dom.refPopover.contains(e.target)
+        && !dom.refChipPrimary.contains(e.target)
+        && !dom.refChipSecondary.contains(e.target)) {
+      toggleDropdown(false);
+    }
+    if (pinnedInfoId && !dom.infoTooltip.contains(e.target)) {
+      hideInfoTooltip();
+    }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && state.dropdownOpen) {
+    if (e.key !== 'Escape') return;
+    if (pinnedInfoId || activeInfoBtn) {
+      const btn = activeInfoBtn;
+      hideInfoTooltip();
+      if (btn) btn.focus();
+      return;
+    }
+    if (state.dropdownOpen) {
       const chip = state.dropdownTarget === 'secondary'
         ? dom.refChipSecondary
         : dom.refChipPrimary;
@@ -633,10 +782,23 @@ async function init() {
     }
   });
 
+  dom.bars.addEventListener('mouseover', onBarsOver);
+  dom.bars.addEventListener('mouseout', onBarsOut);
+  dom.bars.addEventListener('click', onBarsClick);
+  dom.bars.addEventListener('focusin', onBarsFocusIn);
+  dom.bars.addEventListener('focusout', onBarsFocusOut);
+
+  dom.infoTooltip.addEventListener('mouseenter', clearInfoHideTimer);
+  dom.infoTooltip.addEventListener('mouseleave', () => {
+    if (pinnedInfoId) return;
+    hideInfoTooltip();
+  });
+
   updateActiveBars();
   window.addEventListener('scroll', () => {
     onScroll();
     if (state.dropdownOpen) toggleDropdown(false);
+    if (activeInfoBtn || pinnedInfoId) hideInfoTooltip();
   }, { passive: true });
   window.addEventListener('resize', () => {
     if (refreshWindowSize()) buildDriver();
@@ -648,6 +810,7 @@ async function init() {
         : dom.refChipPrimary;
       positionPopover(chip);
     }
+    if (activeInfoBtn) hideInfoTooltip();
   });
 
   try {
