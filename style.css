@@ -443,9 +443,9 @@ code {
 .bar-row {
   order: var(--order, 0);
   display: grid;
-  grid-template-columns: minmax(0, 42%) 1fr;
+  grid-template-columns: minmax(0, 32%) 1fr;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   max-height: 50px;
   opacity: 1;
   overflow: hidden;
@@ -636,6 +636,12 @@ code {
   margin: 0;
   max-width: var(--max-w);
   margin: 0 auto;
+}
+
+.site-footer a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ----- Responsive ----- */
