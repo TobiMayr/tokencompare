@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://token-compare.com/sitemap.xml

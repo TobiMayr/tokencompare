@@ -481,10 +481,6 @@ function renderComparison() {
   if (!count || count <= 0) {
     dom.comparisonEmpty.hidden = false;
     dom.comparisonContent.hidden = true;
-    state.userPickedPrimary = false;
-    state.userPickedSecondary = false;
-    state.selectedRefId = null;
-    state.secondaryRefId = null;
     toggleDropdown(false);
     return;
   }
@@ -763,13 +759,70 @@ function onScroll() {
   });
 }
 
+// ----- URL params -----
+
+// Reads ?title=&tokens=&text=&ref1=&ref2= and seeds state + DOM inputs.
+// Returns the mode to switch to ('paste' | 'count') if params imply one, else null.
+function applyUrlParamsToState() {
+  const params = new URLSearchParams(window.location.search);
+  if (![...params.keys()].length) return null;
+
+  const refIds = new Set(REFERENCES.map(r => r.id));
+
+  const title = params.get('title');
+  if (title) {
+    const t = title.replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (t) state.userBarLabel = t;
+  }
+
+  const ref1 = params.get('ref1');
+  if (ref1 && refIds.has(ref1)) {
+    state.selectedRefId = ref1;
+    state.userPickedPrimary = true;
+  }
+
+  const ref2 = params.get('ref2');
+  if (ref2 && refIds.has(ref2) && ref2 !== state.selectedRefId) {
+    state.secondaryRefId = ref2;
+    state.userPickedSecondary = true;
+  }
+
+  const text = params.get('text');
+  if (text) {
+    state.inputText = text;
+    state.charCount = text.length;
+    state.wordCount = countWords(text);
+    dom.pasteInput.value = text;
+    return 'paste';
+  }
+
+  const tokensRaw = params.get('tokens');
+  if (tokensRaw) {
+    const n = parseInt(tokensRaw.replace(/[^\d]/g, ''), 10);
+    if (n > 0 && isFinite(n)) {
+      state.manualCount = n;
+      state.userTokenCount = n;
+      dom.countInput.value = n.toLocaleString('en-US');
+      return 'count';
+    }
+  }
+
+  return null;
+}
+
 // ----- Init -----
 
 async function init() {
+  const urlMode = applyUrlParamsToState();
+  if (state.userBarLabel && state.userBarLabel !== 'Your input') {
+    document.title = `${state.userBarLabel} — Token Compare`;
+  }
+
   buildBars();
   buildPopover();
   refreshWindowSize();
   buildDriver();
+  if (urlMode === 'count') setMode('count');
   render();
 
   for (const tab of dom.tabs) {
