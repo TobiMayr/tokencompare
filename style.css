@@ -52,6 +52,10 @@ code {
 .site-header {
   padding: 0;
   flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .site-header h1 {
@@ -65,6 +69,23 @@ code {
   margin: 2px 0 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
+}
+
+.site-header-nav {
+  flex-shrink: 0;
+  padding-top: 6px;
+}
+
+.site-header-nav a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 120ms ease;
+}
+
+.site-header-nav a:hover {
+  color: var(--accent);
 }
 
 /* ----- Scroll stage / main view ----- */
