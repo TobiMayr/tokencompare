@@ -92,9 +92,12 @@
           <p class="count-hint">Enter a token count directly — useful for things like API spend.</p>
         </div>
 
-        <p class="stats" id="stats" aria-live="polite">
-          <span class="stats-loading">Loading tokeniser…</span>
-        </p>
+        <div class="stats-row">
+          <p class="stats" id="stats" aria-live="polite">
+            <span class="stats-loading">Loading tokeniser…</span>
+          </p>
+          <button class="share-btn" id="share-btn" type="button" hidden aria-label="Copy a shareable link to this view">Share link</button>
+        </div>
       </section>
 
       <section class="output">
@@ -124,7 +127,7 @@
   </div>
 
   <footer class="site-footer">
-    <p>Made by Tobi Mayr (with a lot of help from Claude) · runs entirely in your browser, nothing sent anywhere · <a href="https://github.com/TobiMayr/tokencompare" target="_blank" rel="noopener noreferrer">source code</a></p>
+    <p>Made by Tobi Mayr (with a lot of help from Claude) · your text never leaves your browser · <a href="https://github.com/TobiMayr/tokencompare" target="_blank" rel="noopener noreferrer">source code</a></p>
   </footer>
 
   <div class="ref-popover" id="ref-popover" role="listbox" aria-hidden="true" aria-label="Choose a reference text">

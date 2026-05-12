@@ -161,6 +161,7 @@ const dom = {
   bars: document.getElementById('bars'),
   driver: document.getElementById('scroll-driver'),
   infoTooltip: document.getElementById('info-tooltip'),
+  shareBtn: document.getElementById('share-btn'),
   tabs: document.querySelectorAll('.tab'),
   panels: document.querySelectorAll('.tab-panel'),
 };
@@ -268,6 +269,7 @@ function buildPopover() {
       }
       updateSelectedItem();
       renderComparison();
+      updateUrl();
       toggleDropdown(false);
     });
     dom.refList.appendChild(li);
@@ -595,6 +597,7 @@ function wireUserLabelEditing(labelEl) {
     state.userBarLabel = next;
     labelEl.textContent = next;
     labelEl.setAttribute('title', next === 'Your input' ? 'Click to rename' : next);
+    updateUrl();
   });
 }
 
@@ -657,6 +660,8 @@ function render() {
   renderStats();
   renderComparison();
   renderChart();
+  updateShareButton();
+  updateUrl();
 }
 
 // ----- Input handling -----
@@ -810,6 +815,55 @@ function applyUrlParamsToState() {
   return null;
 }
 
+// Build a shareable URL from current state. Returns the bare base URL when
+// nothing meaningful is set.
+function buildShareUrl() {
+  const params = new URLSearchParams();
+  if (state.userBarLabel && state.userBarLabel !== 'Your input') {
+    params.set('title', state.userBarLabel);
+  }
+  if (state.mode === 'paste' && state.inputText) {
+    params.set('text', state.inputText);
+  } else if (state.mode === 'count' && state.manualCount > 0) {
+    params.set('tokens', String(state.manualCount));
+  }
+  if (state.selectedRefId) params.set('ref1', state.selectedRefId);
+  if (state.secondaryRefId) params.set('ref2', state.secondaryRefId);
+
+  const qs = params.toString();
+  const base = window.location.origin + window.location.pathname;
+  return qs ? `${base}?${qs}` : base;
+}
+
+function updateUrl() {
+  const next = buildShareUrl();
+  if (window.location.href === next) return;
+  history.replaceState(null, '', next);
+}
+
+function updateShareButton() {
+  const hasContent = state.userTokenCount && state.userTokenCount > 0;
+  dom.shareBtn.hidden = !hasContent;
+}
+
+let shareResetTimer = null;
+async function onShareClick() {
+  const url = buildShareUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    dom.shareBtn.textContent = '✓ Copied!';
+    dom.shareBtn.classList.add('is-success');
+  } catch (err) {
+    console.error('Failed to copy share URL:', err);
+    dom.shareBtn.textContent = 'Copy failed';
+  }
+  clearTimeout(shareResetTimer);
+  shareResetTimer = setTimeout(() => {
+    dom.shareBtn.textContent = 'Share link';
+    dom.shareBtn.classList.remove('is-success');
+  }, 2000);
+}
+
 // ----- Init -----
 
 async function init() {
@@ -830,6 +884,7 @@ async function init() {
   }
   dom.pasteInput.addEventListener('input', onPasteInput);
   dom.countInput.addEventListener('input', onCountInput);
+  dom.shareBtn.addEventListener('click', onShareClick);
 
   const wireChip = (chip, target) => {
     chip.addEventListener('click', (e) => {

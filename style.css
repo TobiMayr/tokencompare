@@ -202,12 +202,53 @@ code {
   font-size: 0.85rem;
 }
 
-.stats {
+.stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   margin: 4px 0 0;
+}
+
+.stats {
+  margin: 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
   min-height: 1.4em;
+}
+
+.share-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 160ms ease;
+  white-space: nowrap;
+}
+
+.share-btn:hover {
+  text-decoration-thickness: 2px;
+}
+
+.share-btn:focus-visible {
+  outline: none;
+  border-radius: 3px;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.share-btn.is-success {
+  color: #2a9d54;
+  text-decoration: none;
+}
+
+.share-btn[hidden] {
+  display: none;
 }
 
 .stats strong {
