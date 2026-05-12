@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FAQ — Token Compare</title>
+  <meta name="description" content="Frequently asked questions about tokens, tokenisers, and how Token Compare's reference numbers are calculated." />
+  <link rel="canonical" href="https://token-compare.com/faq/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://token-compare.com/faq/" />
+  <meta property="og:title" content="FAQ — Token Compare" />
+  <meta property="og:description" content="Common questions about tokens, tokenisers, and how Token Compare arrives at its numbers." />
+  <meta property="og:image" content="https://token-compare.com/tokencompare.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Token Compare app showing a token count compared to familiar reference texts on a horizontal bar chart." />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FAQ — Token Compare" />
+  <meta name="twitter:description" content="Common questions about tokens, tokenisers, and how Token Compare arrives at its numbers." />
+  <meta name="twitter:image" content="https://token-compare.com/tokencompare.png" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%93%8F</text></svg>" />
+  <link rel="stylesheet" href="../style.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a token?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tokens are the chunks of text that large language models actually read and write: sometimes a whole word ('hello'), sometimes a fragment ('ization'), sometimes a single character or punctuation mark. Models charge by the token, count their context windows in tokens, and are trained on corpora measured in tokens."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why aren't tokens just words?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tokenisers are trained to compress text efficiently, so common words become a single token and rarer or longer ones split into pieces. 'The' is one token; 'antidisestablishmentarianism' is six. As a rough rule, English prose averages around 1.3 tokens per word."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do GPT, Claude, and Gemini count the same text differently?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's o200k_base (GPT-4o / GPT-5) as a single reference point; expect Claude and Gemini to land in roughly the same ballpark, not on the same number."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do some languages use more tokens than English?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most production tokenisers were trained on data heavily skewed toward English, so many other languages get worse compression. German runs around 1.4 tokens per word vs about 1.3 for English (compounds, umlauts); Japanese and Chinese can need 2-3× more tokens per character; transliterated proper nouns from non-Latin scripts (like 'Mahershalalhashbaz' or 'Tchaikovsky') often split into many tokens each. Languages with Latin script and lots of training data (Spanish, French) come closer to English ratios. This is also why the KJV Bible's token count runs higher than its English word count would predict."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How accurate are the reference text counts?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Where a text is in the public domain (Pride and Prejudice, Moby-Dick, the Magna Carta), counts are exact, produced by running the actual full text through o200k_base. Where a text is still in copyright (Harry Potter, 1984, Lord of the Rings) or is a moving target (Wikipedia, training corpora), counts are estimates derived from word counts and an empirical tokens-per-word ratio. Click the info icon next to any reference for the source and method."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my text sent anywhere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Tokenisation, comparison, and rendering all happen in your browser. The only network traffic on this page is the tokeniser library itself (loaded once from a CDN) and an anonymous pageview ping to Plausible. Your text never leaves your machine."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-c5-wklmhSNoTqLGx3rVY_.js"></script>
+  <script>
+    window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }, plausible.init = plausible.init || function(i) { plausible.o = i || {} };
+    plausible.init()
+  </script>
+</head>
+<body>
+  <main class="content-view">
+    <header class="site-header">
+      <h1><a href="/" class="home-link">Token Compare</a></h1>
+      <p class="tagline">Frequently asked questions</p>
+    </header>
+
+    <p class="content-intro">Common questions about tokens, tokenisers, and how Token Compare arrives at its numbers.</p>
+
+    <section class="faq">
+      <h2>What is a token?</h2>
+      <p>Tokens are the chunks of text that large language models actually read and write: sometimes a whole word ("hello"), sometimes a fragment ("ization"), sometimes a single character or punctuation mark. Models charge by the token, count their context windows in tokens, and are trained on corpora measured in tokens.</p>
+
+      <h2>Why aren't tokens just words?</h2>
+      <p>Tokenisers are trained to compress text efficiently, so common words become a single token and rarer or longer ones split into pieces. "The" is one token; "antidisestablishmentarianism" is six. As a rough rule, English prose averages around 1.3 tokens per word.</p>
+
+      <h2>Why do GPT, Claude, and Gemini count the same text differently?</h2>
+      <p>Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's <code>o200k_base</code> (GPT-4o / GPT-5) as a single reference point; expect Claude and Gemini to land in roughly the same ballpark, not on the same number.</p>
+
+      <h2>Why do some languages use more tokens than English?</h2>
+      <p>Most production tokenisers were trained on data heavily skewed toward English, so many other languages get worse compression. German runs around 1.4 tokens per word vs about 1.3 for English (compounds, umlauts); Japanese and Chinese can need 2-3× more tokens per character; transliterated proper nouns from non-Latin scripts (like "Mahershalalhashbaz" or "Tchaikovsky") often split into many tokens each. Languages with Latin script and lots of training data (Spanish, French) come closer to English ratios. This is also why the KJV Bible's token count runs higher than its English word count would predict.</p>
+
+      <h2>How accurate are the reference text counts?</h2>
+      <p>Where a text is in the public domain (Pride and Prejudice, Moby-Dick, the Magna Carta), counts are exact, produced by running the actual full text through <code>o200k_base</code>. Where a text is still in copyright (Harry Potter, 1984, Lord of the Rings) or is a moving target (Wikipedia, training corpora), counts are estimates derived from word counts and an empirical tokens-per-word ratio. Click the ⓘ next to any reference for the source and method.</p>
+
+      <h2>Is my text sent anywhere?</h2>
+      <p>No. Tokenisation, comparison, and rendering all happen in your browser. The only network traffic on this page is the tokeniser library itself (loaded once from a CDN) and an anonymous pageview ping to Plausible. Your text never leaves your machine.</p>
+    </section>
+
+    <p class="content-back"><a href="/">← Back to Token Compare</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <p>Made by Tobi Mayr (with a lot of help from Claude) · runs entirely in your browser, nothing sent anywhere · <a href="/faq/">FAQ</a> · <a href="https://github.com/TobiMayr/tokencompare" target="_blank" rel="noopener noreferrer">source code</a></p>
+  </footer>
+</body>
+</html>
