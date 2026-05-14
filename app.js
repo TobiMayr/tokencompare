@@ -10,11 +10,11 @@ const REFERENCES = [
   { id: 'magna-carta', label: 'Magna Carta',                              tokens: 5700,                       note: 'Exact count of the G.R.C. Davis English translation: 4,585 words → 5,690 tokens. Other translations differ in length. <a href="https://sourcebooks.fordham.edu/source/magnacarta.asp">Fordham Sourcebooks</a>' },
   { id: 'paper',       label: 'A research paper',                         tokens: 12000,         rough: true, note: 'Assumes a ~9,000-word peer-reviewed paper. Reference: <a href="https://arxiv.org/abs/1706.03762">"Attention Is All You Need"</a> tokenises to 10,140 tokens at 6,141 words; scaling gives ~13K for a 9K-word paper. Venue and field vary widely.' },
   { id: 'manifesto',   label: 'The Communist Manifesto',                  tokens: 15700,                      note: 'Exact count of the 1888 English edition: 11,467 words → 15,659 tokens. <a href="https://www.gutenberg.org/ebooks/61">Project Gutenberg #61</a>' },
-  { id: 'little-prince', label: 'The Little Prince',                      tokens: 21500,                      note: 'Estimate (still in copyright in many jurisdictions). 16,534 words × ~1.3 ≈ 21,500 tokens. <a href="https://en.wikipedia.org/wiki/The_Little_Prince">Wikipedia</a>' },
-  { id: 'animal-farm', label: 'Animal Farm',                              tokens: 40000,                      note: 'Estimate (still in copyright in most jurisdictions). 29,966 words × ~1.3 ≈ 40,000 tokens. <a href="https://en.wikipedia.org/wiki/Animal_Farm">Wikipedia</a>' },
+  { id: 'little-prince', label: 'The Little Prince',                      tokens: 19200,                      note: 'Exact count. 14,585 words. <a href="https://en.wikipedia.org/wiki/The_Little_Prince">Wikipedia</a>' },
+  { id: 'animal-farm', label: 'Animal Farm',                              tokens: 41457,                      note: 'Exact count. 30,722 words <a href="https://en.wikipedia.org/wiki/Animal_Farm">Wikipedia</a>' },
   { id: 'grundgesetz', label: 'German Grundgesetz',                       tokens: 42500,                      note: 'Exact count of the official consolidated text: 24,950 words → 42,483 tokens. German has a higher tokens/word ratio (~1.77) than English due to compound words and umlauts. <a href="https://www.gesetze-im-internet.de/gg/">gesetze-im-internet.de</a>' },
   { id: 'gatsby',      label: 'The Great Gatsby',                         tokens: 65000,                      note: 'Exact count of the 2021 US public-domain edition: 48,208 words → 64,919 tokens. Gatsby is genuinely short (~50K words). <a href="https://www.gutenberg.org/ebooks/64317">Project Gutenberg #64317</a>' },
-  { id: '1984',        label: '1984',                                     tokens: 119000,                     note: 'Estimate (still in copyright in most jurisdictions). 88,942 words × ~1.3 ≈ 119,000 tokens. <a href="https://en.wikipedia.org/wiki/Nineteen_Eighty-Four">Wikipedia</a>' },
+  { id: '1984',        label: '1984',                                     tokens: 141563,                     note: 'Exact count. 105,308 words. <a href="https://en.wikipedia.org/wiki/Nineteen_Eighty-Four">Wikipedia</a>' },
   { id: 'quran',       label: 'The Quran',                                tokens: 168000,                     note: 'Estimate. Original Arabic Quran is ~77,430 words; English translations expand to ~119K (Pickthall) — ~125K (Sahih International) to convey nuance. Using ~120K English words × ~1.4 ≈ 168,000 tokens; Arabic transliterations (Allah, Muhammad, Ibrahim, Musa) tokenize heavily. <a href="https://www.quranprogress.com/en/blog/how-many-words-in-the-quran/">quranprogress</a>' },
   { id: 'pride',       label: 'Pride and Prejudice',                      tokens: 170000,                     note: 'Exact count: 127,359 words → 170,258 tokens. <a href="https://www.gutenberg.org/ebooks/1342">Project Gutenberg #1342</a>' },
   { id: 'torah',       label: 'The Torah (Pentateuch)',                   tokens: 220000,                     note: 'Estimate. The Torah is the first five books of the Hebrew Bible (Genesis, Exodus, Leviticus, Numbers, Deuteronomy). KJV English: ~156,000 words × ~1.4 ≈ 220,000 tokens (same Hebrew-name penalty as the full Bible). Original Hebrew is denser: 79,976 words / 304,805 letters by traditional count. <a href="https://en.wikipedia.org/wiki/Statistics_of_the_Hebrew_Bible">Statistics of the Hebrew Bible</a>' },
@@ -46,8 +46,8 @@ function windowIds(start) {
   return new Set(REFERENCES.slice(start, start + WINDOW_SIZE).map(r => r.id));
 }
 
-// Bar row max-height (50px) + padding-top (7px) — kept in sync with CSS .bar-row.
-const BAR_ROW_HEIGHT = 50;
+// Bar row height — kept in sync with CSS .bar-row { height: 52px }.
+const BAR_ROW_HEIGHT = 52;
 const MIN_WINDOW_SIZE = 5;
 // Cap so there are always enough scroll steps to make the chart feel scrollable
 // even on very tall viewports.
@@ -68,7 +68,12 @@ function computeWindowSize() {
   const bottomLimit = window.innerHeight - footerH - mainPadBottomExtra;
   const available = bottomLimit - chartGap - disclaimerH - barsTop;
 
-  const fits = Math.floor(available / BAR_ROW_HEIGHT);
+  // When there's user input, the user bar is rendered in addition to the
+  // WINDOW_SIZE references (it slots in by sort order). Reserve one row for it
+  // so the disclaimer never gets clipped.
+  const hasUser = state.userTokenCount != null && state.userTokenCount > 0;
+  const slots = Math.floor(available / BAR_ROW_HEIGHT);
+  const fits = hasUser ? slots - 1 : slots;
   return Math.max(MIN_WINDOW_SIZE, Math.min(MAX_WINDOW_SIZE, fits));
 }
 
@@ -96,6 +101,152 @@ function desiredWindowStartForCount(count) {
 }
 
 let lastAutoTarget = null;
+let prevActiveBarIds = new Set();
+
+// ----- Bar fill + trail animation -----
+// Each row's fill width and trail are driven per-frame from JS state. The
+// trail uses a velocity-decay model: an "anchor" lags behind the bar's
+// leading edge by an exponentially-weighted moving average, and the gap
+// between them is rendered as a gradient. Tuned in trail-lab.html.
+const TRAIL_DECAY  = 0.80;
+const TRAIL_SCALE  = 2.0;
+const ANIM_DUR_MS  = 500;
+const SHRINK_RGB   = '216, 90, 74';   // var(--accent)
+const GROW_RGB     = '16, 137, 142';  // mix-blend-difference(#e8e3d8, accent)
+const TRAIL_VISIBLE_THRESHOLD = 0.2;  // gap < this → trail invisible / settled
+
+const barAnimations = new Map();  // barId → { current, source, target, startTime, trailAnchor, peakHigh, peakLow }
+let barAnimRaf = null;
+const prefersReducedMotion =
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Matches the chart's cubic-bezier(0.22, 1, 0.36, 1) closely enough for bars.
+function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+
+function applyBarDom(row, current) {
+  const fill = row.querySelector('.bar-fill');
+  if (fill) fill.style.width = current + '%';
+}
+
+function applyTrailDom(row, s) {
+  const tick = row.querySelector('.bar-tick');
+  if (!tick) return;
+  const shrinkGap = s.trailAnchor - s.current;
+  const growGap   = s.current - s.trailAnchor;
+
+  if (shrinkGap > TRAIL_VISIBLE_THRESHOLD) {
+    const cap = Math.max(0, s.peakHigh - s.current);
+    const w = Math.min(shrinkGap * TRAIL_SCALE, cap);
+    tick.style.left = s.current + '%';
+    tick.style.width = w + '%';
+    tick.style.background =
+      `linear-gradient(to right, rgba(${SHRINK_RGB}, 1) 0%, rgba(${SHRINK_RGB}, 0) 100%)`;
+    tick.style.opacity = '1';
+  } else if (growGap > TRAIL_VISIBLE_THRESHOLD) {
+    const cap = Math.max(0, s.current - s.peakLow);
+    const w = Math.min(growGap * TRAIL_SCALE, cap);
+    tick.style.left = (s.current - w) + '%';
+    tick.style.width = w + '%';
+    // The user bar's fill is the accent red, so the cyan growth trail clashes.
+    // Use the row's rendered background instead so the trail disappears into
+    // it visually (dark on zebra=0, slightly lighter on zebra=1 rows).
+    if (row.classList.contains('is-user')) {
+      const rgb = row.dataset.zebra === '1' ? '28, 26, 34' : '20, 18, 26';
+      tick.style.background =
+        `linear-gradient(to right, rgba(${rgb}, 0) 0%, rgba(${rgb}, 1) 100%)`;
+    } else {
+      tick.style.background =
+        `linear-gradient(to right, rgba(${GROW_RGB}, 0) 0%, rgba(${GROW_RGB}, 1) 100%)`;
+    }
+    tick.style.opacity = '1';
+  } else {
+    tick.style.opacity = '0';
+  }
+}
+
+function kickBarAnimation(barId, target, isAppearing) {
+  const row = dom.bars.querySelector(`[data-bar-id="${barId}"]`);
+  if (!row) return;
+
+  if (prefersReducedMotion) {
+    applyBarDom(row, target);
+    const tick = row.querySelector('.bar-tick');
+    if (tick) tick.style.opacity = '0';
+    barAnimations.delete(barId);
+    return;
+  }
+
+  let s = barAnimations.get(barId);
+  if (!s) {
+    // No live animation. Resume from the bar's current rendered width unless
+    // the row is appearing fresh, in which case grow it in from 0.
+    const fill = row.querySelector('.bar-fill');
+    const currentFromDom = fill ? (parseFloat(fill.style.width) || 0) : 0;
+    const startPct = isAppearing ? 0 : currentFromDom;
+    s = {
+      current: startPct,
+      source: startPct,
+      target,
+      startTime: performance.now(),
+      trailAnchor: startPct,
+      peakHigh: startPct,
+      peakLow: startPct,
+    };
+    applyBarDom(row, startPct);
+    const tick = row.querySelector('.bar-tick');
+    if (tick) tick.style.opacity = '0';
+  } else if (isAppearing) {
+    // Row is re-entering view — restart cleanly from 0.
+    s.current = 0;
+    s.source = 0;
+    s.target = target;
+    s.startTime = performance.now();
+    s.trailAnchor = 0;
+    s.peakHigh = 0;
+    s.peakLow = 0;
+    applyBarDom(row, 0);
+    const tick = row.querySelector('.bar-tick');
+    if (tick) tick.style.opacity = '0';
+  } else {
+    s.source = s.current;
+    s.target = target;
+    s.startTime = performance.now();
+  }
+  barAnimations.set(barId, s);
+  if (barAnimRaf === null) barAnimRaf = requestAnimationFrame(barAnimFrame);
+}
+
+function barAnimFrame(now) {
+  let anyActive = false;
+  for (const [barId, s] of barAnimations) {
+    const row = dom.bars.querySelector(`[data-bar-id="${barId}"]`);
+    if (!row) { barAnimations.delete(barId); continue; }
+
+    const t = Math.min(1, (now - s.startTime) / ANIM_DUR_MS);
+    s.current = s.source + (s.target - s.source) * easeOutQuart(t);
+    s.trailAnchor = s.trailAnchor * TRAIL_DECAY + s.current * (1 - TRAIL_DECAY);
+    if (s.current > s.peakHigh) s.peakHigh = s.current;
+    if (s.current < s.peakLow)  s.peakLow  = s.current;
+
+    applyBarDom(row, s.current);
+    applyTrailDom(row, s);
+
+    const animDone = t >= 1;
+    const trailGap = Math.abs(s.trailAnchor - s.current);
+    if (animDone && trailGap < TRAIL_VISIBLE_THRESHOLD) {
+      // Snap final state and stop tracking this row.
+      s.peakHigh = s.current;
+      s.peakLow = s.current;
+      const tick = row.querySelector('.bar-tick');
+      if (tick) tick.style.opacity = '0';
+      barAnimations.delete(barId);
+    } else {
+      anyActive = true;
+    }
+  }
+  barAnimRaf = anyActive ? requestAnimationFrame(barAnimFrame) : null;
+}
 
 function scrollToWindowStart(target) {
   target = Math.max(0, Math.min(MAX_WINDOW_START, target));
@@ -174,12 +325,6 @@ function escapeAttr(s) {
     .replace(/>/g, '&gt;');
 }
 
-const _stripDiv = document.createElement('div');
-function stripHtml(s) {
-  _stripDiv.innerHTML = String(s);
-  return _stripDiv.textContent || '';
-}
-
 // ----- Tokeniser -----
 
 async function loadTokeniser() {
@@ -226,12 +371,10 @@ function formatRatio(ratio) {
   return ratio.toFixed(decimals).replace(/0+$/, '').replace(/\.$/, '');
 }
 
-function pluralise(label, ratio) {
-  // crude pluralisation: append "s" if ratio ≠ 1 and label doesn't already end with s/y
-  if (ratio === 1) return label;
-  if (/(s|ss)$/i.test(label)) return label;
-  if (/y$/.test(label)) return label.slice(0, -1) + 'ies';
-  return label + 's';
+function pluralise(label, _ratio) {
+  // Labels are read as nouns even at ratios ≠ 1; appending 's' produced
+  // awkward forms once labels became uppercase ("1984S", "A TWEET (280 CHARS)S").
+  return label;
 }
 
 // ----- Reference picker -----
@@ -347,8 +490,9 @@ function toggleDropdown(open, target) {
 // ----- Info tooltip -----
 
 let pinnedInfoId = null;
-let activeInfoBtn = null;
+let activeInfoRow = null;
 let infoHideTimer = null;
+let infoShowTimer = null;
 
 function clearInfoHideTimer() {
   if (infoHideTimer) {
@@ -357,23 +501,39 @@ function clearInfoHideTimer() {
   }
 }
 
+function clearInfoShowTimer() {
+  if (infoShowTimer) {
+    clearTimeout(infoShowTimer);
+    infoShowTimer = null;
+  }
+}
+
 function scheduleInfoHide() {
   clearInfoHideTimer();
   infoHideTimer = setTimeout(() => hideInfoTooltip(), 150);
 }
 
-function positionInfoTooltip(anchor) {
+function scheduleInfoShow(row) {
+  clearInfoShowTimer();
+  infoShowTimer = setTimeout(() => showInfoTooltip(row), 200);
+}
+
+function positionInfoTooltip(row) {
+  // Anchor next to the label text — it's always visible and in a consistent
+  // place, regardless of how wide the bar fill is.
+  const labelText = row.querySelector('.bar-label-text');
+  const anchor = labelText || row;
   const r = anchor.getBoundingClientRect();
   const margin = 8;
   const w = dom.infoTooltip.offsetWidth;
   const h = dom.infoTooltip.offsetHeight;
-  // Prefer placing to the right of the icon, vertically centered.
-  let left = r.right + 8;
+  let left = r.right + 12;
   let top = r.top + r.height / 2 - h / 2;
   if (left + w > window.innerWidth - margin) {
-    // Not enough room on the right — drop below the icon instead.
+    // Not enough room on the right — drop below the row instead.
+    const rowR = row.getBoundingClientRect();
     left = r.left;
-    top = r.bottom + 6;
+    top = rowR.bottom + 6;
   }
   left = Math.max(margin, Math.min(window.innerWidth - w - margin, left));
   top = Math.max(margin, Math.min(window.innerHeight - h - margin, top));
@@ -381,13 +541,15 @@ function positionInfoTooltip(anchor) {
   dom.infoTooltip.style.top = top + 'px';
 }
 
-function showInfoTooltip(btn) {
-  const refId = btn.dataset.noteId;
+function showInfoTooltip(row) {
+  const refId = row.dataset.noteId;
+  if (!refId) return;
   const ref = REFERENCES.find(r => r.id === refId);
   if (!ref || !ref.note) return;
   clearInfoHideTimer();
-  if (activeInfoBtn && activeInfoBtn !== btn) {
-    activeInfoBtn.setAttribute('aria-expanded', 'false');
+  clearInfoShowTimer();
+  if (activeInfoRow && activeInfoRow !== row) {
+    activeInfoRow.setAttribute('aria-expanded', 'false');
   }
   dom.infoTooltip.innerHTML = ref.note;
   dom.infoTooltip.querySelectorAll('a').forEach(a => {
@@ -396,64 +558,90 @@ function showInfoTooltip(btn) {
   });
   dom.infoTooltip.classList.add('is-open');
   dom.infoTooltip.setAttribute('aria-hidden', 'false');
-  btn.setAttribute('aria-expanded', 'true');
-  activeInfoBtn = btn;
-  // Position after layout so width/height are known.
-  requestAnimationFrame(() => positionInfoTooltip(btn));
+  row.setAttribute('aria-expanded', 'true');
+  activeInfoRow = row;
+  requestAnimationFrame(() => positionInfoTooltip(row));
 }
 
 function hideInfoTooltip() {
   clearInfoHideTimer();
-  if (!activeInfoBtn && !pinnedInfoId) return;
+  if (!activeInfoRow && !pinnedInfoId) return;
   dom.infoTooltip.classList.remove('is-open');
   dom.infoTooltip.setAttribute('aria-hidden', 'true');
-  if (activeInfoBtn) activeInfoBtn.setAttribute('aria-expanded', 'false');
-  activeInfoBtn = null;
+  if (activeInfoRow) activeInfoRow.setAttribute('aria-expanded', 'false');
+  activeInfoRow = null;
   pinnedInfoId = null;
 }
 
 function onBarsOver(e) {
-  const btn = e.target.closest('.bar-info');
-  if (!btn) return;
-  if (pinnedInfoId) return; // pinned takes precedence over hover
-  showInfoTooltip(btn);
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row) return;
+  // mouseover fires for every child; ignore moves within the same row.
+  if (e.relatedTarget && row.contains(e.relatedTarget)) return;
+  if (pinnedInfoId) return;
+  // If a tooltip is already open, swap to this row instantly (no debounce);
+  // otherwise wait 200ms so a casual mouse pass doesn't fire one.
+  if (activeInfoRow) {
+    clearInfoShowTimer();
+    clearInfoHideTimer();
+    showInfoTooltip(row);
+  } else {
+    clearInfoHideTimer();
+    scheduleInfoShow(row);
+  }
 }
 
 function onBarsOut(e) {
-  const btn = e.target.closest('.bar-info');
-  if (!btn) return;
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row) return;
+  // Still inside the same row — ignore.
+  if (e.relatedTarget && row.contains(e.relatedTarget)) return;
+  clearInfoShowTimer();
   if (pinnedInfoId) return;
-  // Don't hide if focus is still on the button (keyboard user).
-  if (document.activeElement === btn) return;
-  // Delay so the cursor can move into the tooltip to click a link.
+  if (document.activeElement === row) return;
   scheduleInfoHide();
 }
 
 function onBarsClick(e) {
-  const btn = e.target.closest('.bar-info');
-  if (!btn) return;
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row) return;
   e.stopPropagation();
-  const id = btn.dataset.noteId;
+  const id = row.dataset.noteId;
   if (pinnedInfoId === id) {
     hideInfoTooltip();
   } else {
     pinnedInfoId = id;
-    showInfoTooltip(btn);
+    showInfoTooltip(row);
   }
 }
 
 function onBarsFocusIn(e) {
-  const btn = e.target.closest('.bar-info');
-  if (!btn) return;
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row) return;
   if (pinnedInfoId) return;
-  showInfoTooltip(btn);
+  // No delay on focus — keyboard users expect instant feedback.
+  showInfoTooltip(row);
 }
 
 function onBarsFocusOut(e) {
-  const btn = e.target.closest('.bar-info');
-  if (!btn) return;
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row) return;
   if (pinnedInfoId) return;
   hideInfoTooltip();
+}
+
+function onBarsKeydown(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const row = e.target.closest('.bar-row[data-note-id]');
+  if (!row || e.target !== row) return;
+  e.preventDefault();
+  const id = row.dataset.noteId;
+  if (pinnedInfoId === id) {
+    hideInfoTooltip();
+  } else {
+    pinnedInfoId = id;
+    showInfoTooltip(row);
+  }
 }
 
 // ----- Rendering -----
@@ -521,37 +709,29 @@ function renderComparison() {
   }
 }
 
-const BAR_COLORS = [
-  { fill: '#98c1d9', tone: 'light' },  // powder blue
-  { fill: '#3d5a80', tone: 'dark' },   // dusk blue
-];
-
-function colorFor(index) {
-  return BAR_COLORS[index % BAR_COLORS.length];
-}
-
 function buildBars() {
-  // Render all reference bars + a user bar (hidden when no input)
+  // Render all reference bars + a user bar (hidden when no input).
+  // Markup is a flat row with absolutely-positioned children so the cream bar
+  // fill (.bar-fill) sits beneath mix-blend label/count.
+  // Rows with a note are focusable + carry data-note-id so the whole row acts
+  // as the info-tooltip hit target (hover, focus, tap).
   dom.bars.innerHTML = '';
-  REFERENCES.forEach((ref, idx) => {
+  REFERENCES.forEach((ref) => {
     const li = document.createElement('li');
     li.className = 'bar-row is-inactive';
     li.dataset.barId = ref.id;
-    const { fill, tone } = colorFor(idx);
-    li.style.setProperty('--bar-color', fill);
-    li.dataset.barTone = tone;
-    const infoBtn = ref.note
-      ? `<button class="bar-info" type="button" data-note-id="${ref.id}" aria-label="${escapeAttr(stripHtml(ref.note))}" aria-expanded="false">i</button>`
-      : '';
+    if (ref.note) {
+      li.dataset.noteId = ref.id;
+      li.tabIndex = 0;
+      li.setAttribute('role', 'button');
+      li.setAttribute('aria-label', `${ref.label}: more info`);
+      li.setAttribute('aria-expanded', 'false');
+    }
     li.innerHTML = `
-      <div class="bar-label">
-        <span class="bar-label-text" title="${escapeAttr(ref.label)}">${ref.label}</span>
-        ${infoBtn}
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill"></div>
-        <span class="bar-count">${formatNumber(ref.tokens)}</span>
-      </div>
+      <div class="bar-fill"></div>
+      <div class="bar-tick"></div>
+      <div class="bar-label"><span class="bar-label-text" title="${escapeAttr(ref.label)}">${ref.label}</span></div>
+      <span class="bar-count">${formatNumber(ref.tokens)}</span>
     `;
     dom.bars.appendChild(li);
   });
@@ -559,13 +739,10 @@ function buildBars() {
   userLi.className = 'bar-row is-user is-inactive';
   userLi.dataset.barId = 'user';
   userLi.innerHTML = `
-    <div class="bar-label">
-      <span class="bar-label-text user-editable" contenteditable="plaintext-only" spellcheck="false" title="Click to rename"></span>
-    </div>
-    <div class="bar-track">
-      <div class="bar-fill"></div>
-      <span class="bar-count" data-user-count></span>
-    </div>
+    <div class="bar-fill"></div>
+    <div class="bar-tick"></div>
+    <div class="bar-label"><span class="bar-label-text user-editable" contenteditable="plaintext-only" spellcheck="false" title="Click to rename"></span></div>
+    <span class="bar-count" data-user-count></span>
   `;
   const userLabel = userLi.querySelector('.bar-label-text');
   userLabel.textContent = state.userBarLabel;
@@ -601,25 +778,6 @@ function wireUserLabelEditing(labelEl) {
   });
 }
 
-function positionCount(row, item, max) {
-  const track = row.querySelector('.bar-track');
-  const count = row.querySelector('.bar-count');
-  const trackWidth = track.offsetWidth;
-  if (!trackWidth) return;
-  const fillPx = (item.tokens / max) * trackWidth;
-  const countWidth = count.getBoundingClientRect().width;
-  const padding = 8;
-  let x;
-  if (fillPx >= countWidth + padding * 2) {
-    x = fillPx - countWidth - padding;
-    row.classList.remove('count-outside');
-  } else {
-    x = fillPx + padding;
-    row.classList.add('count-outside');
-  }
-  count.style.transform = `translate3d(${x}px, -50%, 0)`;
-}
-
 function renderChart() {
   const activeRefs = REFERENCES.filter(r => state.activeBarIds.has(r.id));
   const userCount = state.userTokenCount;
@@ -630,30 +788,54 @@ function renderChart() {
   const activeIds = new Set(all.map(b => b.id));
   const max = all.length ? Math.max(...all.map(b => b.tokens)) : 1;
 
-  // Sort by tokens (smallest -> largest) and assign visual order
+  // Each ref's zebra is anchored to its absolute REFERENCES index so the
+  // colour stays put as the window scrolls. The user bar inserts between
+  // refs and breaks that natural alternation; refs *larger* than the user
+  // flip parity so alternation continues across the inserted row. As the
+  // user count changes and crosses a ref boundary, that one ref flips —
+  // the minimum disturbance needed to keep the stripes alternating.
   const sorted = [...all].sort((a, b) => a.tokens - b.tokens);
+  const userVisualIdx = sorted.findIndex(b => b.id === 'user');
   sorted.forEach((item, i) => {
     const row = dom.bars.querySelector(`[data-bar-id="${item.id}"]`);
     if (!row) return;
     row.style.setProperty('--order', i);
+    if (item.id !== 'user') {
+      const refIdx = REFERENCES.findIndex(r => r.id === item.id);
+      const natural = refIdx % 2;
+      const flip = userVisualIdx !== -1 && i > userVisualIdx;
+      row.dataset.zebra = String(flip ? 1 - natural : natural);
+    }
   });
+  if (userVisualIdx !== -1) {
+    const userRow = dom.bars.querySelector('[data-bar-id="user"]');
+    const neighbourIdx = userVisualIdx > 0 ? userVisualIdx - 1 : userVisualIdx + 1;
+    const neighbour = sorted[neighbourIdx];
+    const neighbourRow = neighbour
+      ? dom.bars.querySelector(`[data-bar-id="${neighbour.id}"]`)
+      : null;
+    const neighbourZebra = neighbourRow ? neighbourRow.dataset.zebra : '0';
+    userRow.dataset.zebra = neighbourZebra === '1' ? '0' : '1';
+  }
 
   for (const row of dom.bars.querySelectorAll('.bar-row')) {
     const id = row.dataset.barId;
     if (activeIds.has(id)) {
-      row.classList.remove('is-inactive');
       const item = all.find(b => b.id === id);
-      const fill = row.querySelector('.bar-fill');
-      const pct = (item.tokens / max) * 100;
-      fill.style.width = pct + '%';
+      const targetPct = (item.tokens / max) * 100;
+      const isAppearing = !prevActiveBarIds.has(id);
+      row.classList.remove('is-inactive');
+      kickBarAnimation(id, targetPct, isAppearing);
       if (id === 'user') {
         row.querySelector('[data-user-count]').textContent = formatNumber(userCount);
       }
-      positionCount(row, item, max);
     } else {
       row.classList.add('is-inactive');
+      // Drop any in-flight animation so a re-entering bar starts cleanly from 0.
+      barAnimations.delete(id);
     }
   }
+  prevActiveBarIds = activeIds;
 }
 
 function render() {
@@ -687,7 +869,10 @@ const onPasteInput = debounce(() => {
   state.inputText = text;
   state.charCount = text.length;
   state.wordCount = countWords(text);
+  const prevHasUser = state.userTokenCount != null && state.userTokenCount > 0;
   state.userTokenCount = state.tokeniserReady ? tokenise(text) : null;
+  const hasUser = state.userTokenCount != null && state.userTokenCount > 0;
+  if (prevHasUser !== hasUser && refreshWindowSize()) buildDriver();
   render();
   autoScrollToUserBar();
 }, 150);
@@ -696,10 +881,13 @@ const onCountInput = debounce(() => {
   if (state.mode !== 'count') return;
   const raw = dom.countInput.value.replace(/[^\d]/g, '');
   const n = raw ? parseInt(raw, 10) : 0;
+  const prevHasUser = state.userTokenCount != null && state.userTokenCount > 0;
   state.manualCount = n;
   state.userTokenCount = n > 0 ? n : null;
   state.charCount = 0;
   state.wordCount = 0;
+  const hasUser = state.userTokenCount != null && state.userTokenCount > 0;
+  if (prevHasUser !== hasUser && refreshWindowSize()) buildDriver();
   render();
   autoScrollToUserBar();
 }, 100);
@@ -846,6 +1034,7 @@ function updateShareButton() {
   dom.shareBtn.hidden = !hasContent;
 }
 
+const SHARE_BTN_DEFAULT = 'Share link <span class="share-btn-arrow" aria-hidden="true">→</span>';
 let shareResetTimer = null;
 async function onShareClick() {
   const url = buildShareUrl();
@@ -859,7 +1048,7 @@ async function onShareClick() {
   }
   clearTimeout(shareResetTimer);
   shareResetTimer = setTimeout(() => {
-    dom.shareBtn.textContent = 'Share link';
+    dom.shareBtn.innerHTML = SHARE_BTN_DEFAULT;
     dom.shareBtn.classList.remove('is-success');
   }, 2000);
 }
@@ -912,10 +1101,10 @@ async function init() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (pinnedInfoId || activeInfoBtn) {
-      const btn = activeInfoBtn;
+    if (pinnedInfoId || activeInfoRow) {
+      const row = activeInfoRow;
       hideInfoTooltip();
-      if (btn) btn.focus();
+      if (row) row.focus();
       return;
     }
     if (state.dropdownOpen) {
@@ -932,6 +1121,7 @@ async function init() {
   dom.bars.addEventListener('click', onBarsClick);
   dom.bars.addEventListener('focusin', onBarsFocusIn);
   dom.bars.addEventListener('focusout', onBarsFocusOut);
+  dom.bars.addEventListener('keydown', onBarsKeydown);
 
   dom.infoTooltip.addEventListener('mouseenter', clearInfoHideTimer);
   dom.infoTooltip.addEventListener('mouseleave', () => {
@@ -943,7 +1133,7 @@ async function init() {
   window.addEventListener('scroll', () => {
     onScroll();
     if (state.dropdownOpen) toggleDropdown(false);
-    if (activeInfoBtn || pinnedInfoId) hideInfoTooltip();
+    if (activeInfoRow || pinnedInfoId) hideInfoTooltip();
   }, { passive: true });
   window.addEventListener('resize', () => {
     if (refreshWindowSize()) buildDriver();
@@ -955,7 +1145,7 @@ async function init() {
         : dom.refChipPrimary;
       positionPopover(chip);
     }
-    if (activeInfoBtn) hideInfoTooltip();
+    if (activeInfoRow) hideInfoTooltip();
   });
 
   try {
@@ -970,6 +1160,17 @@ async function init() {
   if (state.mode === 'paste') onPasteInput();
   else onCountInput();
   render();
+
+  // After fonts/layout settle, recompute the window so the chart-meta and
+  // current input panel height are accounted for. Without this, an extra row
+  // sometimes spills past the chart-section on first paint.
+  requestAnimationFrame(() => {
+    if (refreshWindowSize()) {
+      buildDriver();
+      updateActiveBars();
+      renderChart();
+    }
+  });
 }
 
 init();

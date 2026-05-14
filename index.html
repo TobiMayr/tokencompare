@@ -62,7 +62,10 @@
           <h1>Token Compare</h1>
           <p class="tagline">Make sense of token counts.</p>
         </div>
-        <nav class="site-header-nav"><a href="/faq/">FAQ</a></nav>
+        <nav class="site-header-nav">
+          <button class="share-btn" id="share-btn" type="button" hidden aria-label="Copy a shareable link to this view">Share link <span class="share-btn-arrow" aria-hidden="true">→</span></button>
+          <a href="/faq/">FAQ</a>
+        </nav>
       </header>
       <section class="inputs">
         <div class="tabs" role="tablist">
@@ -96,7 +99,6 @@
           <p class="stats" id="stats" aria-live="polite">
             <span class="stats-loading">Loading tokeniser…</span>
           </p>
-          <button class="share-btn" id="share-btn" type="button" hidden aria-label="Copy a shareable link to this view">Share link</button>
         </div>
       </section>
 
@@ -114,6 +116,10 @@
       </section>
 
       <section class="chart-section" aria-label="Reference texts comparison">
+        <div class="chart-meta" aria-hidden="true">
+          <span>Reference texts ↓</span>
+          <span>Tokens (o200k_base)</span>
+        </div>
         <ol class="bars" id="bars"></ol>
         <p class="disclaimer">
           Token counts use the <code>o200k_base</code> tokeniser (GPT-4o / GPT-5).
@@ -131,6 +137,7 @@
   </footer>
 
   <div class="ref-popover" id="ref-popover" role="listbox" aria-hidden="true" aria-label="Choose a reference text">
+    <div class="ref-popover-header">Choose a reference text</div>
     <ul class="ref-list" id="ref-list"></ul>
   </div>
 
