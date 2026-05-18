@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Token Compare — make sense of token counts</title>
-  <meta name="description" content="Compare token counts to familiar texts. Paste any text or enter a number, and see what it adds up to in Bibles, Wikipedias, and Harry Potter books." />
+  <title>Token Compare: make sense of token counts</title>
+  <meta name="description" content="Compare token counts to familiar texts. Paste any text or enter a number, and see what it adds up to in tweets, Harry Potter books, and Wikipedias." />
   <link rel="canonical" href="https://token-compare.com/" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://token-compare.com/" />
-  <meta property="og:title" content="Token Compare — make sense of token counts" />
-  <meta property="og:description" content="Paste any text or enter a token count, and see what it adds up to in Bibles, Wikipedias, and Harry Potter books." />
+  <meta property="og:title" content="Token Compare: make sense of token counts" />
+  <meta property="og:description" content="Paste any text or enter a token count, and see what it adds up to in tweets, Harry Potter books, and Wikipedias." />
   <meta property="og:image" content="https://token-compare.com/tokencompare.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -19,8 +19,8 @@
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Token Compare — make sense of token counts" />
-  <meta name="twitter:description" content="Paste any text or enter a token count, and see what it adds up to in Bibles, Wikipedias, and Harry Potter books." />
+  <meta name="twitter:title" content="Token Compare: make sense of token counts" />
+  <meta name="twitter:description" content="Paste any text or enter a token count, and see what it adds up to in tweets, Harry Potter books, and Wikipedias." />
   <meta name="twitter:image" content="https://token-compare.com/tokencompare.png" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%93%8F</text></svg>" />
@@ -32,7 +32,7 @@
     "@type": "WebApplication",
     "name": "Token Compare",
     "url": "https://token-compare.com/",
-    "description": "Compare token counts to familiar texts. Paste any text or enter a number, and see what it adds up to in Bibles, Wikipedias, and Harry Potter books.",
+    "description": "Compare token counts to familiar texts. Paste any text or enter a number, and see what it adds up to in tweets, Harry Potter books, and Wikipedias.",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Any",
     "browserRequirements": "Requires JavaScript",
@@ -92,7 +92,7 @@
             aria-label="Token count"
             autocomplete="off"
           />
-          <p class="count-hint">Enter a token count directly — useful for things like API spend.</p>
+          <p class="count-hint">Enter a token count directly. Useful for things like API spend.</p>
         </div>
 
         <div class="stats-row">
@@ -107,10 +107,10 @@
           <div class="comparison-empty" id="comparison-empty">Paste some text or enter a token count to see comparisons.</div>
           <div class="comparison-content" id="comparison-content" hidden>
             That's about
-            <span class="comparison-num" id="comparison-num-primary">—</span>
-            <button class="ref-chip" id="ref-chip-primary" type="button" data-target="primary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-primary">—</span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button><span class="comparison-secondary" id="comparison-secondary">, or
-            <span class="comparison-num" id="comparison-num-secondary">—</span>
-            <button class="ref-chip" id="ref-chip-secondary" type="button" data-target="secondary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-secondary">—</span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button></span>.
+            <span class="comparison-num" id="comparison-num-primary"></span>
+            <button class="ref-chip" id="ref-chip-primary" type="button" data-target="primary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-primary"></span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button><span class="comparison-secondary" id="comparison-secondary">, or
+            <span class="comparison-num" id="comparison-num-secondary"></span>
+            <button class="ref-chip" id="ref-chip-secondary" type="button" data-target="secondary" aria-haspopup="listbox" aria-expanded="false"><span class="ref-chip-label" id="ref-chip-label-secondary"></span><span class="ref-chip-arrow" aria-hidden="true">▾</span></button></span>.
           </div>
         </div>
       </section>
@@ -123,7 +123,7 @@
         <ol class="bars" id="bars"></ol>
         <p class="disclaimer">
           Token counts use the <code>o200k_base</code> tokeniser (GPT-5).
-          Claude and Gemini use different tokenisers — counts may differ by ±5–10%.
+          Claude and Gemini use different tokenisers, so counts may differ by ±5–10%.
           Reference text counts are approximate. No data leaves your browser.
         </p>
       </section>

@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FAQ — Token Compare</title>
+  <title>FAQ | Token Compare</title>
   <meta name="description" content="Frequently asked questions about tokens, tokenisers, and how Token Compare's reference numbers are calculated." />
   <link rel="canonical" href="https://token-compare.com/faq/" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://token-compare.com/faq/" />
-  <meta property="og:title" content="FAQ — Token Compare" />
+  <meta property="og:title" content="FAQ | Token Compare" />
   <meta property="og:description" content="Common questions about tokens, tokenisers, and how Token Compare arrives at its numbers." />
   <meta property="og:image" content="https://token-compare.com/tokencompare.png" />
   <meta property="og:image:width" content="1200" />
@@ -19,7 +19,7 @@
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="FAQ — Token Compare" />
+  <meta name="twitter:title" content="FAQ | Token Compare" />
   <meta name="twitter:description" content="Common questions about tokens, tokenisers, and how Token Compare arrives at its numbers." />
   <meta name="twitter:image" content="https://token-compare.com/tokencompare.png" />
 
@@ -52,7 +52,7 @@
         "name": "Why do GPT, Claude, and Gemini count the same text differently?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's o200k_base (the GPT-5 tokeniser) as a single reference point; expect Claude and Gemini to land in roughly the same ballpark, not on the same number."
+          "text": "Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's o200k_base (the tokeniser used by GPT-5, GPT-4.1, GPT-4o and 4o mini, and the o-series: o1, o3, o4-mini) as a single reference point. Expect Claude and Gemini to land in roughly the same ballpark, not on the same number."
         }
       },
       {
@@ -60,7 +60,7 @@
         "name": "Why isn't there a Claude or Gemini tokeniser option?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Neither Anthropic nor Google publishes the production tokeniser for their current models. The only accurate way to count Claude or Gemini tokens is to call their official count-tokens APIs, which requires a server, API keys, and sending your text over the network — which would break the everything-runs-in-your-browser promise. Other tokeniser sites that offer a 'Claude' or 'Gemini' option are usually shipping the old open-source Claude 1/2 tokeniser or Google's Gemma tokeniser as a stand-in; the numbers are close but not exact, and rarely flagged as such. Sticking to one accurate, fully client-side tokeniser felt more honest than offering pseudo-accurate alternatives."
+          "text": "Neither Anthropic nor Google publishes the production tokeniser for their current models. The only accurate way to count Claude or Gemini tokens is to call their official count-tokens APIs, which requires a server, API keys, and sending your text over the network, which would break the everything-runs-in-your-browser promise. Other tokeniser sites that offer a 'Claude' or 'Gemini' option are usually shipping the old open-source Claude 1/2 tokeniser or Google's Gemma tokeniser as a stand-in; the numbers are close but not exact, and rarely flagged as such. Sticking to one accurate, fully client-side tokeniser felt more honest than offering pseudo-accurate alternatives."
         }
       },
       {
@@ -117,10 +117,10 @@
       <p>Tokenisers are trained to compress text efficiently, so common words become a single token and rarer or longer ones split into pieces. "The" is one token; "antidisestablishmentarianism" is six. As a rough rule, English prose averages around 1.3 tokens per word.</p>
 
       <h2>Why do GPT, Claude, and Gemini count the same text differently?</h2>
-      <p>Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's <code>o200k_base</code> (the GPT-5 tokeniser) as a single reference point; expect Claude and Gemini to land in roughly the same ballpark, not on the same number.</p>
+      <p>Each model family ships its own tokeniser, trained on a different mix of data. The same paragraph produces different counts depending on the model. Typical variance is ±5-10% for English prose, more for code or non-English languages. Token Compare uses OpenAI's <code>o200k_base</code> (the tokeniser used by GPT-5, GPT-4.1, GPT-4o and 4o mini, and the o-series: o1, o3, o4-mini) as a single reference point. Expect Claude and Gemini to land in roughly the same ballpark, not on the same number.</p>
 
       <h2>Why isn't there a Claude or Gemini tokeniser option?</h2>
-      <p>Neither Anthropic nor Google publishes the production tokeniser for their current models. The only accurate way to count Claude or Gemini tokens is to call their official count-tokens APIs, which requires a server, API keys, and sending your text over the network — which would break the everything-runs-in-your-browser promise. Other tokeniser sites that offer a "Claude" or "Gemini" option are usually shipping the old open-source Claude 1/2 tokeniser or Google's Gemma tokeniser as a stand-in; the numbers are close but not exact, and rarely flagged as such. Sticking to one accurate, fully client-side tokeniser felt more honest than offering pseudo-accurate alternatives.</p>
+      <p>Neither Anthropic nor Google publishes the production tokeniser for their current models. The only accurate way to count Claude or Gemini tokens is to call their official count-tokens APIs, which requires a server, API keys, and sending your text over the network, which would break the everything-runs-in-your-browser promise. Other tokeniser sites that offer a "Claude" or "Gemini" option are usually shipping the old open-source Claude 1/2 tokeniser or Google's Gemma tokeniser as a stand-in; the numbers are close but not exact, and rarely flagged as such. Sticking to one accurate, fully client-side tokeniser felt more honest than offering pseudo-accurate alternatives.</p>
 
       <h2>Why do some languages use more tokens than English?</h2>
       <p>Most production tokenisers were trained on data heavily skewed toward English, so many other languages get worse compression. German runs around 1.4 tokens per word vs about 1.3 for English (compounds, umlauts); Japanese and Chinese can need 2-3× more tokens per character; transliterated proper nouns from non-Latin scripts (like "Mahershalalhashbaz" or "Tchaikovsky") often split into many tokens each. Languages with Latin script and lots of training data (Spanish, French) come closer to English ratios. This is also why the KJV Bible's token count runs higher than its English word count would predict.</p>

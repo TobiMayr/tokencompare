@@ -1,4 +1,4 @@
-// Token Compare — main app logic
+// Token Compare main app logic
 // All comparisons happen client-side; no data leaves the browser.
 
 const REFERENCES = [
@@ -15,14 +15,14 @@ const REFERENCES = [
   { id: 'grundgesetz', label: 'German Grundgesetz',                       tokens: 42500,                      note: 'Exact count of the official consolidated text: 24,950 words → 42,483 tokens. German has a higher tokens/word ratio (~1.77) than English due to compound words and umlauts. <a href="https://www.gesetze-im-internet.de/gg/">gesetze-im-internet.de</a>' },
   { id: 'gatsby',      label: 'The Great Gatsby',                         tokens: 65000,                      note: 'Exact count of the 2021 US public-domain edition: 48,208 words → 64,919 tokens. Gatsby is genuinely short (~50K words). <a href="https://www.gutenberg.org/ebooks/64317">Project Gutenberg #64317</a>' },
   { id: '1984',        label: '1984',                                     tokens: 141563,                     note: 'Exact count. 105,308 words. <a href="https://en.wikipedia.org/wiki/Nineteen_Eighty-Four">Wikipedia</a>' },
-  { id: 'quran',       label: 'The Quran',                                tokens: 168000,                     note: 'Estimate. Original Arabic Quran is ~77,430 words; English translations expand to ~119K (Pickthall) — ~125K (Sahih International) to convey nuance. Using ~120K English words × ~1.4 ≈ 168,000 tokens; Arabic transliterations (Allah, Muhammad, Ibrahim, Musa) tokenize heavily. <a href="https://www.quranprogress.com/en/blog/how-many-words-in-the-quran/">quranprogress</a>' },
+  { id: 'quran',       label: 'The Quran',                                tokens: 168000,                     note: 'Estimate. Original Arabic Quran is ~77,430 words; English translations expand to ~119K (Pickthall) up to ~125K (Sahih International) to convey nuance. Using ~120K English words × ~1.4 ≈ 168,000 tokens; Arabic transliterations (Allah, Muhammad, Ibrahim, Musa) tokenize heavily. <a href="https://www.quranprogress.com/en/blog/how-many-words-in-the-quran/">quranprogress</a>' },
   { id: 'pride',       label: 'Pride and Prejudice',                      tokens: 170000,                     note: 'Exact count: 127,359 words → 170,258 tokens. <a href="https://www.gutenberg.org/ebooks/1342">Project Gutenberg #1342</a>' },
   { id: 'torah',       label: 'The Torah (Pentateuch)',                   tokens: 220000,                     note: 'Estimate. The Torah is the first five books of the Hebrew Bible (Genesis, Exodus, Leviticus, Numbers, Deuteronomy). KJV English: ~156,000 words × ~1.4 ≈ 220,000 tokens (same Hebrew-name penalty as the full Bible). Original Hebrew is denser: 79,976 words / 304,805 letters by traditional count. <a href="https://en.wikipedia.org/wiki/Statistics_of_the_Hebrew_Bible">Statistics of the Hebrew Bible</a>' },
   { id: 'moby-dick',   label: 'Moby-Dick',                                tokens: 305000,                     note: 'Exact count: 212,796 words → 305,431 tokens. Nautical jargon, Latin and archaic English push the ratio above typical literary prose. <a href="https://www.gutenberg.org/ebooks/2701">Project Gutenberg #2701</a>' },
-  { id: 'lotr',        label: 'The Lord of the Rings (trilogy)',          tokens: 664000,                     note: 'Estimate (still in copyright). Trilogy main text: 481,103 words — Fellowship 187,790 + Two Towers 156,198 + Return of the King 137,115 (these sum correctly, unlike the ~550K figure online which slips in The Hobbit or appendices). × ~1.4 ≈ 664,000 tokens; invented Elvish names push the ratio up. <a href="https://en.wikipedia.org/wiki/The_Lord_of_the_Rings">Wikipedia</a>' },
+  { id: 'lotr',        label: 'The Lord of the Rings (trilogy)',          tokens: 664000,                     note: 'Estimate (still in copyright). Trilogy main text totals 481,103 words: Fellowship 187,790 + Two Towers 156,198 + Return of the King 137,115. These sum correctly, unlike the ~550K figure online which slips in The Hobbit or appendices. × ~1.4 ≈ 664,000 tokens; invented Elvish names push the ratio up. <a href="https://en.wikipedia.org/wiki/The_Lord_of_the_Rings">Wikipedia</a>' },
   { id: 'war-peace',   label: 'War and Peace',                            tokens: 766000,                     note: 'Exact count of the Maude translation: 563,286 words → 765,705 tokens. <a href="https://www.gutenberg.org/ebooks/2600">Project Gutenberg #2600</a>' },
-  { id: 'context-1m',  label: 'Frontier LLM context window (1M)',         tokens: 1000000,                    note: 'As of May 2026, all four top frontier-model families converged on a ~1M-token context window — <a href="https://claude.com/blog/1m-context-ga">Claude Opus 4.7 &amp; Sonnet 4.6</a>, <a href="https://openai.com/index/introducing-gpt-5-5/">GPT-5.5</a> (API; Codex caps at 400K), <a href="https://deepmind.google/models/model-cards/gemini-3-1-pro/">Gemini 3.1 Pro</a> and <a href="https://api-docs.deepseek.com/news/news260424">DeepSeek V4</a>. Enough to fit War and Peace, but stops just shy of the full KJV Bible — bigger texts need chunking or summarisation.' },
-  { id: 'bible',       label: 'The Bible (KJV)',                          tokens: 1104000,                    note: 'Estimate. KJV main verse text: 783,137 words (OT 602,587 + NT 180,550). Bibles look compact in print because of thin paper and small dense fonts — by word count the KJV is ~1.6× the LOTR trilogy. × ~1.4 ≈ 1,104,000 tokens; Hebrew proper names like Mahershalalhashbaz split into many tokens. <a href="https://lightandgospel.com/how-many-words-are-in-the-kjv-bible/">Source</a>' },
+  { id: 'context-1m',  label: 'Frontier LLM context window (1M)',         tokens: 1000000,                    note: 'As of May 2026, all four top frontier-model families converged on a ~1M-token context window: <a href="https://claude.com/blog/1m-context-ga">Claude Opus 4.7 &amp; Sonnet 4.6</a>, <a href="https://openai.com/index/introducing-gpt-5-5/">GPT-5.5</a> (API; Codex caps at 400K), <a href="https://deepmind.google/models/model-cards/gemini-3-1-pro/">Gemini 3.1 Pro</a> and <a href="https://api-docs.deepseek.com/news/news260424">DeepSeek V4</a>. Enough to fit War and Peace, but stops just shy of the full KJV Bible; bigger texts need chunking or summarisation.' },
+  { id: 'bible',       label: 'The Bible (KJV)',                          tokens: 1104000,                    note: 'Estimate. KJV main verse text: 783,137 words (OT 602,587 + NT 180,550). Bibles look compact in print because of thin paper and small dense fonts; by word count the KJV is ~1.6× the LOTR trilogy. × ~1.4 ≈ 1,104,000 tokens; Hebrew proper names like Mahershalalhashbaz split into many tokens. <a href="https://lightandgospel.com/how-many-words-are-in-the-kjv-bible/">Source</a>' },
   { id: 'shakespeare', label: 'Complete Shakespeare',                     tokens: 1436000,                    note: 'Exact count of the Complete Works: 963,460 words → 1,436,260 tokens. Iambic pentameter, archaic words and character-name tags like ROMEO push the ratio up. <a href="https://www.gutenberg.org/ebooks/100">Project Gutenberg #100</a>' },
   { id: 'hp',          label: 'Harry Potter (7-book series)',             tokens: 1460000,                    note: 'Estimate (still in copyright). 1,084,170 words across all 7 books (76,944 + 85,141 + 107,253 + 190,637 + 257,045 + 168,923 + 198,227). × ~1.35 ≈ 1,460,000 tokens; invented proper nouns (Hogwarts, Hermione, Quidditch) push the ratio up slightly. <a href="https://en.wikipedia.org/wiki/Harry_Potter">Wikipedia</a>' },
   { id: 'got',         label: 'Game of Thrones (5-book series)',          tokens: 2480000,                    note: 'Estimate (still in copyright). ~1,770,000 words across the 5 published A Song of Ice and Fire books (298K + 326K + 424K + 300K + 422K). × ~1.4 ≈ 2,478,000 tokens; heavy fantasy proper nouns (Targaryen, Daenerys, Westeros) plus archaic phrasing push the ratio up. <a href="https://wordsrated.com/number-of-words-in-game-of-thrones-books/">wordsrated</a>' },
@@ -30,14 +30,14 @@ const REFERENCES = [
   { id: 'gutenberg',   label: 'All Project Gutenberg books',              tokens: 5000000000,                 note: 'Estimate. Standardized PG corpus (Gerlach & Font-Clos 2020): 55,905 books, ~3 billion words (2.8B English). Scaled to current ~75K books → ~4B words → ~5B tokens. Mix of languages and classical English. <a href="https://arxiv.org/abs/1812.08092">arxiv 1812.08092</a>' },
   { id: 'wikipedia',   label: 'English Wikipedia (Sept 2025)',             tokens: 6400000000,                 note: 'Estimate (English Wikipedia, September 2025). 7.18M articles containing over 5 billion words → ~6.4 billion tokens. <a href="https://en.wikipedia.org/wiki/Wikipedia:Size_of_Wikipedia">Wikipedia:Size_of_Wikipedia</a>' },
   { id: 'gpt3',        label: 'GPT-3 training corpus (2020)',             tokens: 300000000000,               note: 'The only pretraining figure OpenAI has ever published. GPT-3 (2020) was trained on ~300 billion tokens, weighted across Common Crawl (filtered), WebText2, Books1, Books2 and Wikipedia. No GPT-4 / 4o / 5 figures have ever been released. <a href="https://arxiv.org/abs/2005.14165">Language Models are Few-Shot Learners</a>' },
-  { id: 'github',      label: 'All public code on GitHub',                tokens: 1000000000000,              note: 'Anchored to published figures rather than truly "all" GitHub. The Stack v1 (2022): 6.4TB → 200B training tokens. The Stack v2 (2024): 67.5TB → 900B tokens — both deduplicated and license-filtered. Raw "all public code" (incl. non-permissive, forks, old versions) is probably 5–10× larger. 1T is a defensible Stack-v2 anchor. <a href="https://huggingface.co/datasets/bigcode/the-stack-v2">The Stack v2</a>' },
+  { id: 'github',      label: 'All public code on GitHub',                tokens: 1000000000000,              note: 'Anchored to published figures rather than truly "all" GitHub. The Stack v1 (2022): 6.4TB → 200B training tokens. The Stack v2 (2024): 67.5TB → 900B tokens (both deduplicated and license-filtered). Raw "all public code" (incl. non-permissive, forks, old versions) is probably 5–10× larger. 1T is a defensible Stack-v2 anchor. <a href="https://huggingface.co/datasets/bigcode/the-stack-v2">The Stack v2</a>' },
   { id: 'papers',      label: 'All academic papers ever published',       tokens: 2000000000000,              note: 'Estimate. OpenAlex (Nov 2025) indexes 271.3M scholarly works (core), 463M with the xpac expansion. Average ~5,000 words/paper × ~1.5 (technical prose with citations, equations) ≈ 2T tokens for the core set. Could be 3–4T using the full xpac figure or longer papers. <a href="https://openalex.org/">OpenAlex</a>' },
-  { id: 'llama3',      label: 'Llama 3 training corpus',                  tokens: 15000000000000,             note: 'Official Meta figure. Llama 3 (and 3.1, 3.3) was pretrained on "over 15 trillion tokens" of publicly available text. Llama 3.3 is instruction-tuned on the same 3.1 base — no fresh pretrain. Exact figure unpublished; 15T is the floor. <a href="https://ai.meta.com/blog/meta-llama-3-1/">Meta announcement</a>' },
-  { id: 'deepseek-v4', label: 'DeepSeek V4 training corpus',              tokens: 33000000000000,             note: 'Official DeepSeek figure (April 2026): both V4-Pro and V4-Flash were pretrained on ~33 trillion tokens — a ~2.2× jump over DeepSeek V3 (14.8T, Dec 2024). DeepSeek and Qwen are the open-weights labs outside Meta that consistently publish their corpus sizes; OpenAI, Anthropic, Google and Mistral do not. <a href="https://api-docs.deepseek.com/news/news260424">DeepSeek V4 release</a>' },
-  { id: 'llama4',      label: 'Llama 4 Scout training corpus',            tokens: 40000000000000,             note: 'Official Meta figure (April 2025). Llama 4 Scout was pretrained on ~40 trillion tokens of multimodal data (text, image, video). Llama 4 Maverick used ~22T; the overall Llama 4 mixture exceeds 30T — roughly 2× the Llama 3 corpus, in just one model generation. <a href="https://ai.meta.com/blog/llama-4-multimodal-intelligence/">Meta announcement</a>' },
+  { id: 'llama3',      label: 'Llama 3 training corpus',                  tokens: 15000000000000,             note: 'Official Meta figure. Llama 3 (and 3.1, 3.3) was pretrained on "over 15 trillion tokens" of publicly available text. Llama 3.3 is instruction-tuned on the same 3.1 base, with no fresh pretrain. Exact figure unpublished; 15T is the floor. <a href="https://ai.meta.com/blog/meta-llama-3-1/">Meta announcement</a>' },
+  { id: 'deepseek-v4', label: 'DeepSeek V4 training corpus',              tokens: 33000000000000,             note: 'Official DeepSeek figure (April 2026): both V4-Pro and V4-Flash were pretrained on ~33 trillion tokens, a ~2.2× jump over DeepSeek V3 (14.8T, Dec 2024). DeepSeek and Qwen are the open-weights labs outside Meta that consistently publish their corpus sizes; OpenAI, Anthropic, Google and Mistral do not. <a href="https://api-docs.deepseek.com/news/news260424">DeepSeek V4 release</a>' },
+  { id: 'llama4',      label: 'Llama 4 Scout training corpus',            tokens: 40000000000000,             note: 'Official Meta figure (April 2025). Llama 4 Scout was pretrained on ~40 trillion tokens of multimodal data (text, image, video). Llama 4 Maverick used ~22T; the overall Llama 4 mixture exceeds 30T, roughly 2× the Llama 3 corpus, in just one model generation. <a href="https://ai.meta.com/blog/llama-4-multimodal-intelligence/">Meta announcement</a>' },
 ];
 
-// Window size is computed dynamically from viewport height — see computeWindowSize().
+// Window size is computed dynamically from viewport height. See computeWindowSize().
 let WINDOW_SIZE = 10;
 let MAX_WINDOW_START = REFERENCES.length - WINDOW_SIZE; // last valid window start index
 let stepCount = MAX_WINDOW_START; // one scroll step per shift
@@ -46,7 +46,7 @@ function windowIds(start) {
   return new Set(REFERENCES.slice(start, start + WINDOW_SIZE).map(r => r.id));
 }
 
-// Bar row height — kept in sync with CSS .bar-row { height: 52px }.
+// Bar row height. Kept in sync with CSS .bar-row { height: 52px }.
 const BAR_ROW_HEIGHT = 52;
 const MIN_WINDOW_SIZE = 3;
 // Cap so there are always enough scroll steps to make the chart feel scrollable
@@ -197,7 +197,7 @@ function kickBarAnimation(barId, target, isAppearing) {
     const tick = row.querySelector('.bar-tick');
     if (tick) tick.style.opacity = '0';
   } else if (isAppearing) {
-    // Row is re-entering view — restart cleanly from 0.
+    // Row is re-entering view; restart cleanly from 0.
     s.current = 0;
     s.source = 0;
     s.target = target;
@@ -364,7 +364,7 @@ function formatRatio(ratio) {
   if (ratio >= 1) return ratio.toFixed(1).replace(/\.0$/, '');
   if (ratio >= 0.1) return ratio.toFixed(2);
   if (ratio >= 0.01) return ratio.toFixed(3);
-  // Tiny ratios — show with leading zeros, ~2 significant figures
+  // Tiny ratios: show with leading zeros, ~2 significant figures
   const exp = Math.floor(Math.log10(ratio));
   const decimals = -exp + 2;
   return ratio.toFixed(decimals).replace(/0+$/, '').replace(/\.$/, '');
@@ -399,7 +399,7 @@ function buildPopover() {
     li.innerHTML = `
       <span class="ref-item-label">${ref.label}</span>
       <span class="ref-item-count">${formatNumber(ref.tokens)}</span>
-      <span class="ref-item-ratio" data-ratio>—</span>
+      <span class="ref-item-ratio" data-ratio></span>
     `;
     li.addEventListener('click', () => {
       if (state.dropdownTarget === 'secondary') {
@@ -704,7 +704,7 @@ function renderChart() {
   // colour stays put as the window scrolls. The user bar inserts between
   // refs and breaks that natural alternation; refs *larger* than the user
   // flip parity so alternation continues across the inserted row. As the
-  // user count changes and crosses a ref boundary, that one ref flips —
+  // user count changes and crosses a ref boundary, that one ref flips,
   // the minimum disturbance needed to keep the stripes alternating.
   const sorted = [...all].sort((a, b) => a.tokens - b.tokens);
   const userVisualIdx = sorted.findIndex(b => b.id === 'user');
@@ -814,7 +814,7 @@ function setMode(mode) {
   for (const panel of dom.panels) {
     panel.classList.toggle('is-hidden', panel.dataset.panel !== mode);
   }
-  // Input panels have different heights — re-fit the bar window.
+  // Input panels have different heights; re-fit the bar window.
   if (refreshWindowSize()) buildDriver();
   updateActiveBars();
   // Recompute count for the now-active input
@@ -970,7 +970,7 @@ async function onShareClick() {
 async function init() {
   const urlMode = applyUrlParamsToState();
   if (state.userBarLabel && state.userBarLabel !== 'Your input') {
-    document.title = `${state.userBarLabel} — Token Compare`;
+    document.title = `${state.userBarLabel} | Token Compare`;
   }
 
   buildBars();
@@ -1053,7 +1053,7 @@ async function init() {
     }
   });
 
-  // The textarea is user-resizable vertically — re-fit the bar window when its
+  // The textarea is user-resizable vertically; re-fit the bar window when its
   // height changes so bars don't overflow the chart area.
   if (typeof ResizeObserver === 'function') {
     new ResizeObserver(() => {
