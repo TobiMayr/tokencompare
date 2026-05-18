@@ -67,7 +67,7 @@ code {
 
 .tagline {
   margin: 4px 0 0;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -225,7 +225,7 @@ code {
 
 .count-hint {
   margin: 6px 0 0;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -302,7 +302,7 @@ code {
 }
 
 .comparison-empty {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -507,7 +507,7 @@ code {
   font-size: 10px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   padding: 0 0 6px;
   flex-shrink: 0;
 }
@@ -719,7 +719,7 @@ code {
   margin: 8px 0 0;
   font-size: 10px;
   line-height: 1.6;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   letter-spacing: 0.05em;
 }
 
@@ -752,7 +752,7 @@ code {
   padding: 12px 56px;
   background: var(--bg);
   border-top: 1px solid var(--line);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
