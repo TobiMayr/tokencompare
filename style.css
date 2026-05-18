@@ -145,7 +145,6 @@ code {
 
 .output {
   width: 100%;
-  min-height: 3em;
 }
 
 .tabs {
@@ -178,6 +177,10 @@ code {
   border-bottom-color: var(--accent);
 }
 
+.tab-panel {
+  min-height: 94px;
+}
+
 .tab-panel.is-hidden {
   display: none;
 }
@@ -198,7 +201,7 @@ code {
 
 #paste-input {
   min-height: 88px;
-  max-height: 30vh;
+  max-height: 22vh;
   resize: vertical;
 }
 
@@ -245,7 +248,9 @@ code {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
-  min-height: 1.5em;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
 }
 
 .stats strong {
@@ -254,7 +259,7 @@ code {
   font-size: 16px;
   letter-spacing: 0;
   text-transform: none;
-  margin-right: 2px;
+  margin-right: 7px;
 }
 
 .stats-loading {
@@ -291,6 +296,9 @@ code {
   line-height: 1.45;
   color: var(--ink-soft);
   letter-spacing: -0.01em;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
 }
 
 .comparison-empty {
@@ -849,7 +857,9 @@ code {
   #paste-input { min-height: 80px; font-size: 14px; }
   #count-input { font-size: 17px; }
   .stats strong { font-size: 14px; }
-  .comparison { font-size: 16px; padding: 14px 0; }
+  .tab-panel { min-height: 86px; }
+  .stats { min-height: 21px; }
+  .comparison { font-size: 16px; padding: 14px 0; min-height: 52px; }
   .ref-chip { font-size: 0.72em; padding: 3px 8px 3px 10px; }
   .bar-row { height: var(--open-h, 44px); max-height: var(--open-h, 44px); }
   .bar-fill, .bar-tick, .bar-edge { height: 38px; }

@@ -48,7 +48,7 @@ function windowIds(start) {
 
 // Bar row height — kept in sync with CSS .bar-row { height: 52px }.
 const BAR_ROW_HEIGHT = 52;
-const MIN_WINDOW_SIZE = 5;
+const MIN_WINDOW_SIZE = 3;
 // Cap so there are always enough scroll steps to make the chart feel scrollable
 // even on very tall viewports.
 const MAX_WINDOW_SIZE = Math.min(18, REFERENCES.length - 6);
@@ -1052,6 +1052,16 @@ async function init() {
       openNoteRow.style.setProperty('--open-h', h + 'px');
     }
   });
+
+  // The textarea is user-resizable vertically — re-fit the bar window when its
+  // height changes so bars don't overflow the chart area.
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+      if (refreshWindowSize()) buildDriver();
+      updateActiveBars();
+      renderChart();
+    }).observe(dom.pasteInput);
+  }
 
   try {
     await loadTokeniser();
