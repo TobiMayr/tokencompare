@@ -1,9 +1,9 @@
 :root {
   --bg: #14121a;
   --ink: #fff5e8;
-  --ink-soft: #a8a39a;
-  --ink-faint: #6a6258;
-  --line: rgba(232, 227, 216, 0.12);
+  --ink-soft: #c4bdb0;
+  --ink-faint: #9a9389;
+  --line: rgba(232, 227, 216, 0.22);
   --accent: #d85a4a;
   --accent-soft: rgba(216, 90, 74, 0.16);
   --bar: #f0ece5;
@@ -480,71 +480,6 @@ code {
   color: var(--ink);
 }
 
-/* ----- Info tooltip (footnote card) ----- */
-
-.info-tooltip {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 200;
-  max-width: min(420px, calc(100vw - 32px));
-  padding: 18px 22px;
-  background: var(--ink);
-  color: var(--footnote-ink);
-  line-height: 1.55;
-  font-size: 13px;
-  box-shadow: 8px 8px 0 var(--accent);
-  opacity: 0;
-  transform: translateY(-4px);
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity 140ms ease,
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 160ms;
-}
-
-.info-tooltip.is-open {
-  opacity: 1;
-  transform: translateY(0);
-  visibility: visible;
-  pointer-events: auto;
-  transition:
-    opacity 140ms ease,
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s;
-}
-
-.info-tooltip::before {
-  content: "i";
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  width: 28px;
-  height: 28px;
-  background: var(--accent);
-  color: var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 15px;
-  font-style: italic;
-  font-weight: 800;
-}
-
-.info-tooltip a {
-  color: var(--accent);
-  text-decoration: none;
-  border-bottom: 1px solid var(--accent);
-  font-weight: 500;
-}
-
-.info-tooltip a:hover {
-  background: var(--accent);
-  color: var(--ink);
-}
-
 /* ----- Chart ----- */
 
 .chart-section {
@@ -581,13 +516,14 @@ code {
 .bar-row {
   position: relative;
   order: var(--order, 0);
-  height: 52px;
-  max-height: 52px;
+  height: var(--open-h, 52px);
+  max-height: var(--open-h, 52px);
   width: 100%;
   opacity: 1;
   overflow: hidden;
   transition:
     max-height 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 900ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 320ms ease;
 }
 
@@ -605,7 +541,7 @@ code {
   position: absolute;
   left: 0;
   top: 3px;
-  bottom: 3px;
+  height: 46px;
   width: 0;
   min-width: 1px;
   background: var(--bar);
@@ -615,7 +551,7 @@ code {
 .bar-tick {
   position: absolute;
   top: 3px;
-  bottom: 3px;
+  height: 46px;
   z-index: 2;
   pointer-events: none;
   opacity: 0;
@@ -623,7 +559,7 @@ code {
 
 .bar-label {
   position: absolute;
-  top: 50%;
+  top: 26px;
   left: 24px;
   transform: translateY(-50%);
   z-index: 3;
@@ -648,7 +584,7 @@ code {
 
 .bar-count {
   position: absolute;
-  top: 50%;
+  top: 26px;
   right: 24px;
   transform: translateY(-50%);
   z-index: 3;
@@ -662,8 +598,70 @@ code {
   letter-spacing: 0;
 }
 
+.bar-edge {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  height: 46px;
+  width: 0;
+  background: var(--accent);
+  z-index: 4;
+  pointer-events: none;
+  transition: width 160ms ease;
+}
+
+.bar-row[data-note-id]:hover .bar-edge,
+.bar-row[data-note-id]:focus-visible .bar-edge {
+  width: 4px;
+}
+
+.bar-note {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: max-content;
+  min-width: var(--bar-min-w, 0px);
+  max-width: 100%;
+  background: rgba(20, 18, 26, 0.88);
+  backdrop-filter: blur(2px);
+  border-left: 3px solid var(--accent);
+  color: var(--ink);
+  transform: translateX(-101%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 400ms ease;
+}
+
+.bar-note-inner {
+  width: 100%;
+  padding: 14px 48px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.bar-row.is-open .bar-note {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bar-note a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .bar-row[data-note-id] {
-  cursor: help;
+  cursor: pointer;
 }
 
 .bar-row[data-note-id]:focus {
@@ -853,12 +851,13 @@ code {
   .stats strong { font-size: 14px; }
   .comparison { font-size: 16px; padding: 14px 0; }
   .ref-chip { font-size: 0.72em; padding: 3px 8px 3px 10px; }
-  .bar-row { height: 44px; max-height: 44px; }
-  .bar-label, .bar-count { font-size: 13px; }
+  .bar-row { height: var(--open-h, 44px); max-height: var(--open-h, 44px); }
+  .bar-fill, .bar-tick, .bar-edge { height: 38px; }
+  .bar-label, .bar-count { top: 22px; font-size: 13px; }
   .bar-label { left: 16px; max-width: calc(100% - 100px); }
   .bar-count { right: 16px; }
+  .bar-note-inner { padding: 12px 20px; font-size: 12px; }
   .ref-popover { min-width: 280px; }
-  .info-tooltip { padding: 14px 16px; font-size: 12px; }
   .disclaimer { font-size: 10px; }
 }
 
@@ -866,12 +865,13 @@ code {
   .bar-fill,
   .bar-tick,
   .bar-row,
+  .bar-note,
+  .bar-edge,
   .tab,
   #paste-input,
   #count-input,
   .ref-chip-arrow,
-  .ref-popover,
-  .info-tooltip {
+  .ref-popover {
     transition: none !important;
   }
 }

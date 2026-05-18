@@ -311,7 +311,6 @@ const dom = {
   refList: document.getElementById('ref-list'),
   bars: document.getElementById('bars'),
   driver: document.getElementById('scroll-driver'),
-  infoTooltip: document.getElementById('info-tooltip'),
   shareBtn: document.getElementById('share-btn'),
   tabs: document.querySelectorAll('.tab'),
   panels: document.querySelectorAll('.tab-panel'),
@@ -487,147 +486,57 @@ function toggleDropdown(open, target) {
   }
 }
 
-// ----- Info tooltip -----
+// ----- Note overlay -----
 
-let pinnedInfoId = null;
-let activeInfoRow = null;
-let infoHideTimer = null;
-let infoShowTimer = null;
+let openNoteRow = null;
 
-function clearInfoHideTimer() {
-  if (infoHideTimer) {
-    clearTimeout(infoHideTimer);
-    infoHideTimer = null;
-  }
+function measureNoteHeight(row) {
+  const note = row.querySelector('.bar-note');
+  if (!note) return 52;
+  const clone = note.cloneNode(true);
+  clone.style.cssText =
+    'position:absolute;left:0;right:0;top:0;bottom:auto;' +
+    'transform:none;opacity:0;visibility:hidden;pointer-events:none;';
+  row.appendChild(clone);
+  const h = clone.offsetHeight;
+  row.removeChild(clone);
+  return h;
 }
 
-function clearInfoShowTimer() {
-  if (infoShowTimer) {
-    clearTimeout(infoShowTimer);
-    infoShowTimer = null;
-  }
-}
-
-function scheduleInfoHide() {
-  clearInfoHideTimer();
-  infoHideTimer = setTimeout(() => hideInfoTooltip(), 150);
-}
-
-function scheduleInfoShow(row) {
-  clearInfoShowTimer();
-  infoShowTimer = setTimeout(() => showInfoTooltip(row), 200);
-}
-
-function positionInfoTooltip(row) {
-  // Anchor next to the label text — it's always visible and in a consistent
-  // place, regardless of how wide the bar fill is.
-  const labelText = row.querySelector('.bar-label-text');
-  const anchor = labelText || row;
-  const r = anchor.getBoundingClientRect();
-  const margin = 8;
-  const w = dom.infoTooltip.offsetWidth;
-  const h = dom.infoTooltip.offsetHeight;
-  let left = r.right + 12;
-  let top = r.top + r.height / 2 - h / 2;
-  if (left + w > window.innerWidth - margin) {
-    // Not enough room on the right — drop below the row instead.
-    const rowR = row.getBoundingClientRect();
-    left = r.left;
-    top = rowR.bottom + 6;
-  }
-  left = Math.max(margin, Math.min(window.innerWidth - w - margin, left));
-  top = Math.max(margin, Math.min(window.innerHeight - h - margin, top));
-  dom.infoTooltip.style.left = left + 'px';
-  dom.infoTooltip.style.top = top + 'px';
-}
-
-function showInfoTooltip(row) {
-  const refId = row.dataset.noteId;
-  if (!refId) return;
-  const ref = REFERENCES.find(r => r.id === refId);
-  if (!ref || !ref.note) return;
-  clearInfoHideTimer();
-  clearInfoShowTimer();
-  if (activeInfoRow && activeInfoRow !== row) {
-    activeInfoRow.setAttribute('aria-expanded', 'false');
-  }
-  dom.infoTooltip.innerHTML = ref.note;
-  dom.infoTooltip.querySelectorAll('a').forEach(a => {
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-  });
-  dom.infoTooltip.classList.add('is-open');
-  dom.infoTooltip.setAttribute('aria-hidden', 'false');
+function openNote(row) {
+  if (openNoteRow === row) return;
+  if (openNoteRow) closeNote(openNoteRow);
+  const fill = row.querySelector('.bar-fill');
+  const barW = (fill && fill.style.width) || '0%';
+  row.style.setProperty('--bar-min-w', barW);
+  const h = Math.max(52, measureNoteHeight(row));
+  row.style.setProperty('--open-h', h + 'px');
+  row.classList.add('is-open');
   row.setAttribute('aria-expanded', 'true');
-  activeInfoRow = row;
-  requestAnimationFrame(() => positionInfoTooltip(row));
+  openNoteRow = row;
 }
 
-function hideInfoTooltip() {
-  clearInfoHideTimer();
-  if (!activeInfoRow && !pinnedInfoId) return;
-  dom.infoTooltip.classList.remove('is-open');
-  dom.infoTooltip.setAttribute('aria-hidden', 'true');
-  if (activeInfoRow) activeInfoRow.setAttribute('aria-expanded', 'false');
-  activeInfoRow = null;
-  pinnedInfoId = null;
-}
-
-function onBarsOver(e) {
-  const row = e.target.closest('.bar-row[data-note-id]');
+function closeNote(row) {
   if (!row) return;
-  // mouseover fires for every child; ignore moves within the same row.
-  if (e.relatedTarget && row.contains(e.relatedTarget)) return;
-  if (pinnedInfoId) return;
-  // If a tooltip is already open, swap to this row instantly (no debounce);
-  // otherwise wait 200ms so a casual mouse pass doesn't fire one.
-  if (activeInfoRow) {
-    clearInfoShowTimer();
-    clearInfoHideTimer();
-    showInfoTooltip(row);
-  } else {
-    clearInfoHideTimer();
-    scheduleInfoShow(row);
-  }
+  row.classList.remove('is-open');
+  row.setAttribute('aria-expanded', 'false');
+  row.style.removeProperty('--open-h');
+  row.style.removeProperty('--bar-min-w');
+  if (openNoteRow === row) openNoteRow = null;
 }
 
-function onBarsOut(e) {
-  const row = e.target.closest('.bar-row[data-note-id]');
-  if (!row) return;
-  // Still inside the same row — ignore.
-  if (e.relatedTarget && row.contains(e.relatedTarget)) return;
-  clearInfoShowTimer();
-  if (pinnedInfoId) return;
-  if (document.activeElement === row) return;
-  scheduleInfoHide();
+function toggleNote(row) {
+  if (row.classList.contains('is-open')) closeNote(row);
+  else openNote(row);
 }
 
 function onBarsClick(e) {
   const row = e.target.closest('.bar-row[data-note-id]');
   if (!row) return;
+  // Don't toggle when clicking a link inside the note.
+  if (e.target.closest('a')) return;
   e.stopPropagation();
-  const id = row.dataset.noteId;
-  if (pinnedInfoId === id) {
-    hideInfoTooltip();
-  } else {
-    pinnedInfoId = id;
-    showInfoTooltip(row);
-  }
-}
-
-function onBarsFocusIn(e) {
-  const row = e.target.closest('.bar-row[data-note-id]');
-  if (!row) return;
-  if (pinnedInfoId) return;
-  // No delay on focus — keyboard users expect instant feedback.
-  showInfoTooltip(row);
-}
-
-function onBarsFocusOut(e) {
-  const row = e.target.closest('.bar-row[data-note-id]');
-  if (!row) return;
-  if (pinnedInfoId) return;
-  hideInfoTooltip();
+  toggleNote(row);
 }
 
 function onBarsKeydown(e) {
@@ -635,13 +544,7 @@ function onBarsKeydown(e) {
   const row = e.target.closest('.bar-row[data-note-id]');
   if (!row || e.target !== row) return;
   e.preventDefault();
-  const id = row.dataset.noteId;
-  if (pinnedInfoId === id) {
-    hideInfoTooltip();
-  } else {
-    pinnedInfoId = id;
-    showInfoTooltip(row);
-  }
+  toggleNote(row);
 }
 
 // ----- Rendering -----
@@ -720,7 +623,8 @@ function buildBars() {
     const li = document.createElement('li');
     li.className = 'bar-row is-inactive';
     li.dataset.barId = ref.id;
-    if (ref.note) {
+    const hasNote = !!ref.note;
+    if (hasNote) {
       li.dataset.noteId = ref.id;
       li.tabIndex = 0;
       li.setAttribute('role', 'button');
@@ -732,7 +636,15 @@ function buildBars() {
       <div class="bar-tick"></div>
       <div class="bar-label"><span class="bar-label-text" title="${escapeAttr(ref.label)}">${ref.label}</span></div>
       <span class="bar-count">${formatNumber(ref.tokens)}</span>
+      ${hasNote ? '<div class="bar-edge"></div>' : ''}
+      ${hasNote ? `<div class="bar-note"><div class="bar-note-inner">${ref.note}</div></div>` : ''}
     `;
+    if (hasNote) {
+      li.querySelectorAll('.bar-note a').forEach(a => {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      });
+    }
     dom.bars.appendChild(li);
   });
   const userLi = document.createElement('li');
@@ -1095,16 +1007,16 @@ async function init() {
         && !dom.refChipSecondary.contains(e.target)) {
       toggleDropdown(false);
     }
-    if (pinnedInfoId && !dom.infoTooltip.contains(e.target)) {
-      hideInfoTooltip();
+    if (openNoteRow && !openNoteRow.contains(e.target)) {
+      closeNote(openNoteRow);
     }
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (pinnedInfoId || activeInfoRow) {
-      const row = activeInfoRow;
-      hideInfoTooltip();
-      if (row) row.focus();
+    if (openNoteRow) {
+      const row = openNoteRow;
+      closeNote(row);
+      row.focus();
       return;
     }
     if (state.dropdownOpen) {
@@ -1116,24 +1028,14 @@ async function init() {
     }
   });
 
-  dom.bars.addEventListener('mouseover', onBarsOver);
-  dom.bars.addEventListener('mouseout', onBarsOut);
   dom.bars.addEventListener('click', onBarsClick);
-  dom.bars.addEventListener('focusin', onBarsFocusIn);
-  dom.bars.addEventListener('focusout', onBarsFocusOut);
   dom.bars.addEventListener('keydown', onBarsKeydown);
-
-  dom.infoTooltip.addEventListener('mouseenter', clearInfoHideTimer);
-  dom.infoTooltip.addEventListener('mouseleave', () => {
-    if (pinnedInfoId) return;
-    hideInfoTooltip();
-  });
 
   updateActiveBars();
   window.addEventListener('scroll', () => {
     onScroll();
     if (state.dropdownOpen) toggleDropdown(false);
-    if (activeInfoRow || pinnedInfoId) hideInfoTooltip();
+    if (openNoteRow) closeNote(openNoteRow);
   }, { passive: true });
   window.addEventListener('resize', () => {
     if (refreshWindowSize()) buildDriver();
@@ -1145,7 +1047,10 @@ async function init() {
         : dom.refChipPrimary;
       positionPopover(chip);
     }
-    if (activeInfoRow) hideInfoTooltip();
+    if (openNoteRow) {
+      const h = Math.max(52, measureNoteHeight(openNoteRow));
+      openNoteRow.style.setProperty('--open-h', h + 'px');
+    }
   });
 
   try {
